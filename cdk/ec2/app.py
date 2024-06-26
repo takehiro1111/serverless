@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import aws_cdk as cdk
-from network_stack import NetworkStack
+from cdk.ec2.network import NetworkStack
 import json
 
 with open('config.json') as conf:
