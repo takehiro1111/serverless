@@ -2,6 +2,7 @@
 import aws_cdk as cdk
 from cdk.ec2.network import NetworkStack
 import json
+from  aws_cdk._lambda.func import aws_lambda as _lambda
 
 with open('config.json') as conf:
     config = json.load(conf)
@@ -14,5 +15,6 @@ print(f'アカウントID:{account_id}')
 
 # ./network_stack.py
 NetworkStack(app,"vpc-subnet-stack",env=env)
+FunctionStack(app,"lambda-cdk-stack",env=env)
 
 app.synth()
