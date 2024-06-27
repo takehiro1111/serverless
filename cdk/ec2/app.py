@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 import aws_cdk as cdk
-from cdk.ec2.network import NetworkStack
+from network import NetworkStack
 import json
-from  aws_cdk._lambda.func import aws_lambda as _lambda
-
+from  func import FunctionStack
 with open('config.json') as conf:
     config = json.load(conf)
 
