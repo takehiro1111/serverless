@@ -13,7 +13,11 @@ env = cdk.Environment(account= account_id, region= "ap-northeast-1")
 print(f'アカウントID:{account_id}')
 
 # ./network_stack.py
-NetworkStack(app,"vpc-subnet-stack",env=env)
+network_stack = NetworkStack(app, "NetworkStack", env={
+    "account": config["account_id"],
+    "region": config["region"]
+})
+
 FunctionStack(app,"lambda-cdk-stack",env=env)
 
 app.synth()

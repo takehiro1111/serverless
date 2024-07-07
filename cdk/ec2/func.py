@@ -1,7 +1,9 @@
 import aws_cdk as cdk
 import json
-from  aws_cdk import aws_lambda as _lambda
-from  aws_cdk import aws_iam as iam
+from  aws_cdk import(
+  aws_lambda as _lambda,
+  aws_iam as iam
+)
 
 with open('config.json') as conf:
     config = json.load(conf)
