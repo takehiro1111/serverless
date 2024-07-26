@@ -1,0 +1,48 @@
+{
+  "WebACL": {
+    "Name": "example-web-acl",
+    "Id": "116748eb-9f14-4837-be48-bf3950c43c0d",
+    "ARN": "arn:aws:wafv2:us-east-1:421643133281:global/webacl/example-web-acl/116748eb-9f14-4837-be48-bf3950c43c0d",
+    "DefaultAction": {
+      "Allow": {}
+    },
+    "Description": "ACL for allowing specific regions",
+    "Rules": {
+      "CountOtherRegions": {
+        "Name": "CountOtherRegions",
+        "Priority": 1,
+        "Statement": {
+          "NotStatement": {
+            "Statement": {
+              "GeoMatchStatement": {
+                "CountryCodes": [
+                  "JP",
+                  "US",
+                  "SG"
+                ]
+              }
+            }
+          }
+        },
+        "Action": {
+          "Block": {}
+        },
+        "VisibilityConfig": {
+          "SampledRequestsEnabled": true,
+          "CloudWatchMetricsEnabled": true,
+          "MetricName": "countOtherRegions"
+        }
+      }
+    },
+    "VisibilityConfig": {
+      "SampledRequestsEnabled": true,
+      "CloudWatchMetricsEnabled": true,
+      "MetricName": "exampleWebACL"
+    },
+    "Capacity": 1,
+    "ManagedByFirewallManager": false,
+    "LabelNamespace": "awswaf:421643133281:webacl:example-web-acl:",
+    "Scope": "CLOUDFRONT"
+  },
+  "LockToken": "e7657e15-bc66-4f1a-bf92-3a9e7129805a"
+}

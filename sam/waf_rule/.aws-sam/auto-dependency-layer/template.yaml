@@ -1,0 +1,49 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'Sample SAM Template for waf rule create and delete
+
+  '
+Globals:
+  Function:
+    Timeout: 5
+    MemorySize: 128
+    LoggingConfig:
+      LogFormat: JSON
+Resources:
+  DeleteWAFRuleFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: waf_delete.lambda_handler
+      Runtime: python3.12
+      CodeUri: DeleteWAFRuleFunction
+      Role: arn:aws:iam::421643133281:role/lambda-execute-waf
+      Architectures:
+      - x86_64
+      Layers:
+      - Fn::GetAtt:
+        - AwsSamAutoDependencyLayerNestedStack
+        - Outputs.DeleteWAFRuleFunction35c1f86dDepLayer
+    Metadata:
+      SamResourceId: DeleteWAFRuleFunction
+  ReCreateWAFRuleFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: waf_recreate.lambda_handler
+      Runtime: python3.12
+      CodeUri: ReCreateWAFRuleFunction
+      Role: arn:aws:iam::421643133281:role/lambda-execute-waf
+      Architectures:
+      - x86_64
+      Layers:
+      - Fn::GetAtt:
+        - AwsSamAutoDependencyLayerNestedStack
+        - Outputs.ReCreateWAFRuleFunction0a235d72DepLayer
+    Metadata:
+      SamResourceId: ReCreateWAFRuleFunction
+  AwsSamAutoDependencyLayerNestedStack:
+    DeletionPolicy: Delete
+    Metadata:
+      CreatedBy: AWS SAM CLI sync command
+    Properties:
+      TemplateURL: /Users/takehiro.tanaka/sekigaku/serverless/sam/waf_rule/.aws-sam/auto-dependency-layer/adl_nested_template.yaml
+    Type: AWS::CloudFormation::Stack

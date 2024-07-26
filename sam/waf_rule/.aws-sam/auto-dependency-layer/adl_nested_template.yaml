@@ -1,0 +1,36 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AWS SAM CLI Nested Stack for Auto Dependency Layer Creation
+Metadata:
+  SamCliInfo: 1.120.0
+  key: AWS SAM CLI sync command
+Outputs:
+  DeleteWAFRuleFunction35c1f86dDepLayer:
+    Value:
+      Ref: DeleteWAFRuleFunction35c1f86dDepLayer
+  ReCreateWAFRuleFunction0a235d72DepLayer:
+    Value:
+      Ref: ReCreateWAFRuleFunction0a235d72DepLayer
+Resources:
+  DeleteWAFRuleFunction35c1f86dDepLayer:
+    Metadata:
+      CreatedBy: AWS SAM CLI sync command
+    Properties:
+      CompatibleRuntimes:
+      - python3.12
+      ContentUri: /Users/takehiro.tanaka/sekigaku/serverless/sam/waf_rule/.aws-sam/auto-dependency-layer/DeleteWAFRuleFunction35c1f86dDepLayer
+      Description: Auto created layer for dependencies of function DeleteWAFRuleFunction
+      LayerName: waf-rule90d08cb1-DeleteWAFRuleFunction35c1f86d-DepLayer
+      RetentionPolicy: Delete
+    Type: AWS::Serverless::LayerVersion
+  ReCreateWAFRuleFunction0a235d72DepLayer:
+    Metadata:
+      CreatedBy: AWS SAM CLI sync command
+    Properties:
+      CompatibleRuntimes:
+      - python3.12
+      ContentUri: /Users/takehiro.tanaka/sekigaku/serverless/sam/waf_rule/.aws-sam/auto-dependency-layer/ReCreateWAFRuleFunction0a235d72DepLayer
+      Description: Auto created layer for dependencies of function ReCreateWAFRuleFunction
+      LayerName: waf-rule90d08cb1-ReCreateWAFRuleFunctio0a235d72-DepLayer
+      RetentionPolicy: Delete
+    Type: AWS::Serverless::LayerVersion
+Transform: AWS::Serverless-2016-10-31

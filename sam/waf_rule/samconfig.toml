@@ -4,7 +4,7 @@ version = 0.1
 
 [default]
 [default.global.parameters]
-stack_name = "waf-rule"
+stack_name = "waf-rule-update"
 
 [default.build.parameters]
 cached = true
@@ -16,8 +16,9 @@ lint = true
 [default.deploy.parameters]
 capabilities = "CAPABILITY_IAM"
 confirm_changeset = true
-resolve_s3 = true
-s3_prefix = "waf-rule"
+resolve_s3 = false
+s3_bucket = "sam-deploy-421643133281"
+s3_prefix = "waf_rule"
 region = "ap-northeast-1"
 disable_rollback = true
 image_repositories = []
