@@ -22,25 +22,20 @@ Resources:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
       Handler: waf_delete.lambda_handler
-      Role: 'arn:aws:iam::${AccountId}:role/lambda-execute-waf'
+      Role: !Ref lambda-execute-waf
+      Policies: 
+        - arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess
 
   ReCreateWAFRuleFunction:
     Type: AWS::Serverless::Function
     Properties:
       Handler: waf_recreate.lambda_handler
-      Runtime: python3.12
-      Role: 'arn:aws:iam::${AccountId}:role/lambda-execute-waf'
-     
+      Role: !Ref lambda-execute-waf
+      Policies: 
+        - arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess
+
 
 Parameters:
-  AccountId:
-    Type: AWS::SSM::Parameter::Value<String>
-    Default: /personal/ACCOUNT_ID
-
-  SlackWebhook:
-    Type: AWS::SSM::Parameter::Value<String>
-    Default: /personal/slack/WEBHOOK_URL
-
   LambdaExecutionRole:
     Type: String
     Description: The ARN of the IAM role that Lambda assumes
