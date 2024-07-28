@@ -1,7 +1,7 @@
 {
   "WebACL": {
     "Name": "example-web-acl",
-    "Id": "116748eb-9f14-4837-be48-bf3950c43c0d",
+    "Id": "ee6bff94-6163-4c0b-b380-b70e6be19c58",
     "ARN": "arn:aws:wafv2:us-east-1:421643133281:global/webacl/example-web-acl/116748eb-9f14-4837-be48-bf3950c43c0d",
     "DefaultAction": {
       "Allow": {}

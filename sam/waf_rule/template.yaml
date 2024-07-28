@@ -8,6 +8,7 @@ Globals:
   Function:
     Timeout: 5
     MemorySize: 128
+    CodeUri: function/
 
     # You can add LoggingConfig parameters such as the Logformat, Log Group, and SystemLogLevel or ApplicationLogLevel. Learn more here https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html#sam-function-loggingconfig.
     LoggingConfig:
@@ -19,7 +20,6 @@ Resources:
     Properties:
       Handler: waf_delete.lambda_handler
       Runtime: python3.12
-      CodeUri: lambda_function/
       Role: 'arn:aws:iam::421643133281:role/lambda-execute-waf'
       Architectures:
       - x86_64
@@ -29,7 +29,6 @@ Resources:
     Properties:
       Handler: waf_recreate.lambda_handler
       Runtime: python3.12
-      CodeUri: lambda_function/
       Role: 'arn:aws:iam::421643133281:role/lambda-execute-waf'
       Architectures:
       - x86_64

@@ -1,10 +1,10 @@
 import boto3
+from  slack_notify import send_slack_notification
 
 waf = boto3.client('wafv2','us-east-1')
 
 def lambda_handler(event, context):
   web_acl_name = event['WebACL']['Name']
-  print(event['WebACL']['Name'])
   rule_name_to_delete = event['WebACL']['Rules']['CountOtherRegions']['Name']
   web_acl_id = event['WebACL']['Id']
   scope = event['WebACL']['Scope']
@@ -30,8 +30,14 @@ def lambda_handler(event, context):
       VisibilityConfig= web_acl['WebACL']['VisibilityConfig'],
       LockToken= web_acl['LockToken']
     )
+
+    # Send notification to Slack
+    send_slack_notification(web_acl_name, rule_name_to_delete, 'Delete')
+
   except Exception as e:
     print(f"Error Delete Web ACL Rule: {e}")
+    # Send error notification to Slack
+    send_slack_notification(web_acl_name, rule_name_to_delete, f"Failed: {e}")
     raise e
 
   return response
