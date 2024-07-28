@@ -11,9 +11,9 @@ def lambda_handler(event, context):
 
   # Get the Web ACL
   web_acl = waf.get_web_acl(
-      Name = web_acl_name,
-      Scope = scope,
-      Id = web_acl_id,
+    Name = web_acl_name,
+    Scope = scope,
+    Id = web_acl_id,
   )
 
 # Filter out the rule to delete
