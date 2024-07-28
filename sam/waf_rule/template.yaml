@@ -9,6 +9,9 @@ Globals:
     Timeout: 5
     MemorySize: 128
     CodeUri: function/
+    Runtime: python3.12
+    Architectures:
+        - x86_64
 
     # You can add LoggingConfig parameters such as the Logformat, Log Group, and SystemLogLevel or ApplicationLogLevel. Learn more here https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html#sam-function-loggingconfig.
     LoggingConfig:
@@ -19,16 +22,25 @@ Resources:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
       Handler: waf_delete.lambda_handler
-      Runtime: python3.12
-      Role: 'arn:aws:iam::421643133281:role/lambda-execute-waf'
-      Architectures:
-      - x86_64
+      Role: 'arn:aws:iam::${AccountId}:role/lambda-execute-waf'
 
   ReCreateWAFRuleFunction:
     Type: AWS::Serverless::Function
     Properties:
       Handler: waf_recreate.lambda_handler
       Runtime: python3.12
-      Role: 'arn:aws:iam::421643133281:role/lambda-execute-waf'
-      Architectures:
-      - x86_64
+      Role: 'arn:aws:iam::${AccountId}:role/lambda-execute-waf'
+     
+
+Parameters:
+  AccountId:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /personal/ACCOUNT_ID
+
+  SlackWebhook:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /personal/slack/WEBHOOK_URL
+
+  LambdaExecutionRole:
+    Type: String
+    Description: The ARN of the IAM role that Lambda assumes
