@@ -4,6 +4,7 @@ from  slack_notify import monitor_result_slack_notification
 
 waf = boto3.client('wafv2', region_name='us-west-1')
 
+# Prod環境のWAFのみ検知対象とするように改良する必要がある(2024/7/30)
 def check_waf_rules():
   web_acls = waf.list_web_acls(Scope='CLOUDFRONT')['WebACLs']
   for web_acl in web_acls:
