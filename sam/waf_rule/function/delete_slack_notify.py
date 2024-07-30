@@ -1,6 +1,5 @@
 from  slack_notify import send_slack_notification
 
-
 def lambda_handler(event, context):
     try:
         detail = event['detail']

@@ -23,17 +23,37 @@ def get_ssm_parameter()-> str:
 
 def send_slack_notification(web_acl_name,status,rule_name = 'CountOtherRegions' ):
   webhook_url = get_ssm_parameter()
-  recreate_message = {
+
+  message = {
     'text': f'Success WebACL:{web_acl_name} / Rule:{rule_name} / Status: {status}'
   }
 
   try:
     response = requests.post(
       webhook_url, 
-      json = recreate_message,
+      json = message,
       headers = {"Content-Type": "application/json"}
     )
     response.raise_for_status()
 
   except requests.exceptions.RequestException as e:
     raise ValueError(f"Request to Slack returned an error: {e}")
+
+
+def monitor_result_slack_notification(domain,web_acl_name):
+  webhook_url = get_ssm_parameter()
+
+  result_message = {
+    'text': f'No RegionalLimit set for WebACL\n{web_acl_name}/{domain}'
+  }
+
+  try:
+    response = requests.post(
+      webhook_url, 
+      json = result_message,
+      headers = {"Content-Type": "application/json"}
+    )
+    response.raise_for_status()
+
+  except requests.exceptions.RequestException as e:
+    raise ValueError(f"Request to Slack returned an error: {e}")  
