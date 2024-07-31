@@ -26,7 +26,13 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: waf_recreate.lambda_handler
-      Role: !GetAtt LambdaExecutionRole.Arn        
+      Role: !GetAtt LambdaExecutionRole.Arn
+  
+  MonitorWAFRuleFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: daily_monitor.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn      
 
   LambdaExecutionRole:
     Type: AWS::IAM::Role

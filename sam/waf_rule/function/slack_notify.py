@@ -40,11 +40,11 @@ def send_slack_notification(web_acl_name,status,rule_name = 'CountOtherRegions' 
     raise ValueError(f"Request to Slack returned an error: {e}")
 
 
-def monitor_result_slack_notification(domain,web_acl_name):
+def monitor_result_slack_notification(description,web_acl_name):
   webhook_url = get_ssm_parameter()
 
   result_message = {
-    'text': f'No RegionalLimit set for WebACL\n{web_acl_name}/{domain}'
+    'text': f'No RegionalLimit set for WebACL\n{web_acl_name}/{description}'
   }
 
   try:
