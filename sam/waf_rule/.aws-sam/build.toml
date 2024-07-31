@@ -5,9 +5,9 @@ codeuri = "/Users/take/github/serverless/sam/waf_rule/function"
 runtime = "python3.12"
 architecture = "x86_64"
 handler = "waf_delete.lambda_handler"
-source_hash = "8ee9d5b6e6e7b69284edd320a9510a5492c04219f4fd11f8a204ab562976aa5a"
+source_hash = "5bb1c63e3e612372cc55e4b4dbeecd0d4dd398ebf0d05bebc0a0889f461b2370"
 manifest_hash = ""
 packagetype = "Zip"
-functions = ["DeleteWAFRuleFunction", "ReCreateWAFRuleFunction"]
+functions = ["DeleteWAFRuleFunction", "ReCreateWAFRuleFunction", "MonitorWAFRuleFunction"]
 
 [layer_build_definitions]

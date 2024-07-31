@@ -3,7 +3,6 @@ Transform: AWS::Serverless-2016-10-31
 Description: >
   Sample SAM Template for waf rule create and delete
 
-# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
     Timeout: 5
@@ -13,29 +12,155 @@ Globals:
     Architectures:
         - x86_64
 
-    # You can add LoggingConfig parameters such as the Logformat, Log Group, and SystemLogLevel or ApplicationLogLevel. Learn more here https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html#sam-function-loggingconfig.
     LoggingConfig:
       LogFormat: JSON
 
 Resources:
   DeleteWAFRuleFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Type: AWS::Serverless::Function
     Properties:
       Handler: waf_delete.lambda_handler
-      Role: !Ref lambda-execute-waf
-      Policies: 
-        - arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess
+      Role: !GetAtt LambdaExecutionRole.Arn
 
   ReCreateWAFRuleFunction:
     Type: AWS::Serverless::Function
     Properties:
       Handler: waf_recreate.lambda_handler
-      Role: !Ref lambda-execute-waf
-      Policies: 
-        - arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess
+      Role: !GetAtt LambdaExecutionRole.Arn
+  
+  MonitorWAFRuleFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: daily_monitor.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn      
 
-
-Parameters:
   LambdaExecutionRole:
-    Type: String
-    Description: The ARN of the IAM role that Lambda assumes
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: waf_rule_update_lambda_execution_role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: logs_policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: 'arn:aws:logs:ap-northeast-1:*:log-group:*:*'
+
+        - PolicyName: ssm_policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                Resource: 'arn:aws:ssm:ap-northeast-1:*:*'
+
+        - PolicyName: waf_policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - wafv2:UpdateWebACL
+                  - wafv2:ListWebACLs
+                  - wafv2:GetWebACL
+                  - wafv2:DeleteRule
+                  - wafv2:CreateRule
+                Resource: 'arn:aws:wafv2:us-east-1:*:global/webacl/*/*'
+
+
+  DeleteWafRuleEventRule:
+    Type: AWS::Events::Rule
+    Properties:
+      EventPattern:
+        source:
+          - aws.waf
+        detail-type:
+          - AWS API Call via CloudTrail
+        detail:
+          eventSource:
+            - waf.amazonaws.com
+          eventName:
+            - UpdateWebACL
+      Targets:
+        - Arn: !GetAtt DeleteWAFRuleFunction.Arn # 削除時にSlack通知する関数を指定予定
+          Id: 'WafDeleteLambdaFunctionTarget'
+
+  RecreateWafRuleEventRule:
+    Type: AWS::Events::Rule
+    Properties:
+      EventPattern:
+        source:
+          - aws.waf
+        detail-type:
+          - AWS API Call via CloudTrail
+        detail:
+          eventSource:
+            - waf.amazonaws.com
+          eventName:
+            - UpdateWebACL
+          requestParameters:
+            rules:
+              - name
+                - CountOtherRegions
+      Targets:
+        - Arn: !GetAtt ReCreateWAFRuleFunction.Arn # 再作成時にSlack通知する関数を指定予定
+          Id: 'WafRecreateLambdaFunctionTarget'
+
+
+  # EventBridgeがLambda関数を呼び出す権限を定義している。
+  DeleteWafRuleLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref DeleteWAFRuleFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt DeleteWafRuleEventRule.Arn  # 削除時にSlack通知する関数を指定予定
+
+  RecreateWafRuleLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ReCreateWAFRuleFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt RecreateWafRuleEventRule.Arn # 再作成時にSlack通知する関数を指定予定
+
+
+  SlackWebhookParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /waf_update_rule/SLACK_WEBHOOK
+      Type: String # CloudFromationではSecureStringがサポートされていない。
+      Value: '画面上で設定する'
+
+# Outputs:
+#   LambdaExecutionRoleArn:
+#     Description: ARN of the Lambda Execution Role
+#     Value: !GetAtt LambdaExecutionRole.Arn
+
+#   SlackWebhookParameterName:
+#     Description: Name of the Slack Webhook SSM Parameter
+#     Value: !Ref SlackWebhookParameter
+
+#   DeleteWAFRuleFunctionArn:
+#     Description: ARN of the Delete WAF Rule Lambda function
+#     Value: !GetAtt DeleteWAFRuleFunction.Arn
+
+#   ReCreateWAFRuleFunctionArn:
+#     Description: ARN of the Recreate WAF Rule Lambda function
+#     Value: !GetAtt RecreateWAFRuleFunction.Arn
+
+  # EventRuleArn:
+  #   Description: ARN of the EventBridge rule
+  #   Value: !GetAtt WafRuleUpdateEventRule.Arn
