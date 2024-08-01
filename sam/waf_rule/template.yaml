@@ -118,6 +118,18 @@ Resources:
         - Arn: !GetAtt ReCreateWAFRuleFunction.Arn # 再作成時にSlack通知する関数を指定予定
           Id: 'WafRecreateLambdaFunctionTarget'
 
+  MnitorCronEventBridge:
+    Type: AWS::Scheduler::Schedule
+    Properties:
+      Name: waf-monitor
+      Description: Cron to monitor Lambda every hour
+      ScheduleExpression: cron(* 13 ? * MON-FRI *)
+      ScheduleExpressionTimezone: Asia/Tokyo
+      State: ENABLED
+      Targets: 
+        - Arn: !GetAtt MonitorWAFRuleFunction.Arn
+          Id: "TargetLambdaFunction"
+
 
   # EventBridgeがLambda関数を呼び出す権限を定義している。
   DeleteWafRuleLambdaPermission:
@@ -136,6 +148,14 @@ Resources:
       Principal: events.amazonaws.com
       SourceArn: !GetAtt RecreateWafRuleEventRule.Arn # 再作成時にSlack通知する関数を指定予定
 
+  MonitorWafRuleLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref MonitorWAFRuleFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt MonitorWAFRuleFunction.Arn # 再作成時にSlack通知する関数を指定予定
+
 
   SlackWebhookParameter:
     Type: AWS::SSM::Parameter
@@ -144,6 +164,18 @@ Resources:
       Type: String # CloudFromationではSecureStringがサポートされていない。
       Value: '画面上で設定する'
 
+Outputs:
+  DeleteWAFRuleFunctionArn:
+    Description: ARN of the Delete WAF Rule Lambda function
+    Value: !GetAtt DeleteWAFRuleFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-DeleteWAFRuleFunctionArn'
+
+  ReCreateWAFRuleFunctionArn:
+    Description: ARN of the Recreate WAF Rule Lambda function
+    Value: !GetAtt ReCreateWAFRuleFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-ReCreateWAFRuleFunctionArn'
 # Outputs:
 #   LambdaExecutionRoleArn:
 #     Description: ARN of the Lambda Execution Role
