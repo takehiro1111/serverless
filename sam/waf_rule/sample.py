@@ -1,11 +1,13 @@
 import boto3
 import json
+import requests
 
 # 子アカウントのリスト
 accounts = [
     {'account_id': '123456789012', 'role_name': 'CrossAccountWAFRole'},
     {'account_id': '234567890123', 'role_name': 'CrossAccountWAFRole'}
 ]
+ssm = boto3.client('ssm','ap-northeast-1')
 
 def assume_role(account_id, role_name):
     sts_client = boto3.client('sts')
@@ -26,6 +28,7 @@ def check_waf_rules(waf_client):
     for web_acl in web_acls:
         web_acl_name = web_acl['Name']
         web_acl_id = web_acl['Id']
+        
         response = waf_client.get_web_acl(Name=web_acl_name, Scope='REGIONAL', Id=web_acl_id)
         rules = response['WebACL']['Rules']
         regional_limit_rule_exists = any(rule['Name'] == 'RegionalLimit' for rule in rules)
@@ -66,17 +69,19 @@ def notify_slack(missing_rules):
     except requests.exceptions.RequestException as e:
         print(f"Request to Slack returned an error: {e}")
 
-def get_ssm_parameter():
-    ssm = boto3.client('ssm')
-    try:
-        response = ssm.get_parameter(
-            Name='/waf_update_rule/SLACK_WEBHOOK',
-            WithDecryption=True
-        )
-        return response['Parameter']['Value']
-    except ssm.exceptions.ParameterNotFound:
-        raise ValueError("SSM parameter not found.")
-    except ssm.exceptions.ParameterVersionNotFound:
-        raise ValueError("SSM parameter version not found.")
-    except Exception as e:
-        raise ValueError(f"Failed to get SSM parameter: {e}")
+def get_ssm_parameter()-> str:
+  try:
+    response = ssm.get_parameter(
+      Name='/waf_update_rule/SLACK_WEBHOOK',
+      WithDecryption=True
+    )
+    return response['Parameter']['Value']
+  
+  except ssm.exceptions.ParameterNotFound:
+    raise ValueError("SSM parameter not found.")
+  
+  except ssm.exceptions.ParameterVersionNotFound:
+    raise ValueError("SSM parameter version not found.")
+  
+  except Exception as e:
+    raise ValueError(f"Failed to get SSM parameter: {e}")

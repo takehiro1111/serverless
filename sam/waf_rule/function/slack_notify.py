@@ -40,11 +40,12 @@ def send_slack_notification(web_acl_name,status,rule_name = 'CountOtherRegions' 
     raise ValueError(f"Request to Slack returned an error: {e}")
 
 
-def monitor_result_slack_notification(description,web_acl_name):
+def monitor_result_slack_notification(missing_rule_accounts):
   webhook_url = get_ssm_parameter()
 
   result_message = {
-    'text': f'No RegionalLimit set for WebACL\n{web_acl_name}/{description}'
+    'text': f'Missing RegionalLimit rule in the following WebACLs:\n' +
+            '\n'.join([f"Account: {rule['account_id']}, WebACL: {rule['web_acl_name']}" for rule in missing_rule_accounts])
   }
 
   try:

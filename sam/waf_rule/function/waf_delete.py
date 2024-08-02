@@ -22,13 +22,13 @@ def lambda_handler(event, context):
   try:
   # Update the Web ACL without the deleted rule
     response = waf.update_web_acl(
-      Name= web_acl_name,
-      Scope= scope,
-      Id= web_acl_id,
-      DefaultAction= web_acl['WebACL']['DefaultAction'],
-      Rules= updated_rules,
-      VisibilityConfig= web_acl['WebACL']['VisibilityConfig'],
-      LockToken= web_acl['LockToken']
+      Name = web_acl_name,
+      Scope = scope,
+      Id = web_acl_id,
+      DefaultAction = web_acl['WebACL']['DefaultAction'],
+      Rules = updated_rules,
+      VisibilityConfig = web_acl['WebACL']['VisibilityConfig'],
+      LockToken = web_acl['LockToken']
     )
 
     # Send notification to Slack
