@@ -115,7 +115,7 @@ Resources:
                 Action: 'lambda:InvokeFunction'
                 Resource: !GetAtt MonitorWAFRuleFunction.Arn
 
-  # DeleteWafRuleEventRule: #テスト
+  # DeleteWafRuleEventRule:
   #   Type: AWS::Events::Rule
   #   Properties:
   #     EventPattern:
