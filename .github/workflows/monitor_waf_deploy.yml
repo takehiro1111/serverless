@@ -13,7 +13,7 @@ env:
   SLACK_ICON: sam/waf_rule/SAM_acorn_1.0dd761f4fca5f2e7007a323b74631ec71b03a92d.png
   IAM_ROLE_ARN: arn:aws:iam::421643133281:role/deploy-github-actions
   SLACK_CHANNEL_NAME: #lambda_notify
-  WEBHOOK_URL: hhttps://hooks.slack.com/services/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
+  WEBHOOK_URL: https://hooks.slack.com/services/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
 
 permissions:
   id-token: write
