@@ -5,7 +5,7 @@ on:
     branches:
       - 'main'
     paths:
-      - 'sam/waf_rule'
+      - 'sam/waf_rule/**'
   workflow_dispatch:
 
 env:
