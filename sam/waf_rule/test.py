@@ -1,7 +1,6 @@
 import boto3
 import json
-import requests
-from function.slack_notify import get_ssm_parameter
+from function.slack_notify import monitor_result_slack_notification
 
 # WAFの情報を取得する各アカウントのリスト
 accounts = [
@@ -69,22 +68,3 @@ def lambda_handler(event, context):
         'statusCode': 200,
         'body': json.dumps('WAF rules daily check complete')
     }
-
-def monitor_result_slack_notification(missing_rule_accounts):
-    webhook_url = get_ssm_parameter()
-
-    result_message = {
-        'text': f'Missing RegionalLimit rule in the following WebACLs:\n' +
-                '\n'.join([f"Account: {rule['account_name']}, Account_ID: {rule['account_id']}, WebACL: {rule['web_acl_name']}" for rule in missing_rule_accounts])
-    }
-
-    try:
-        response = requests.post(
-            webhook_url, 
-            json=result_message,
-            headers={"Content-Type": "application/json"}
-        )
-        response.raise_for_status()
-
-    except requests.exceptions.RequestException as e:
-        raise ValueError(f"Request to Slack returned an error: {e}")
