@@ -1,7 +1,7 @@
 import boto3
 import json
 import requests
-from slack_notify import get_ssm_parameter
+from function.slack_notify import get_ssm_parameter
 
 # WAFの情報を取得する各アカウントのリスト
 accounts = [
