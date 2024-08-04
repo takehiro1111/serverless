@@ -45,7 +45,7 @@ def monitor_result_slack_notification(missing_rule_accounts):
 
   result_message = {
     'text': f'Missing RegionalLimit rule in the following WebACLs:\n' +
-            '\n'.join([f"Account: {rule['account_id']}, WebACL: {rule['web_acl_name']}" for rule in missing_rule_accounts])
+            '\n'.join([f"Account: {rule['account_name']},Account_ID: {rule['account_id']}, WebACL: {rule['web_acl_name']}" for rule in missing_rule_accounts])
   }
 
   try:

@@ -32,7 +32,14 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: daily_monitor.lambda_handler
-      Role: !GetAtt LambdaExecutionRole.Arn      
+      Role: !GetAtt LambdaExecutionRole.Arn 
+
+  testmonitorfunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: test.assume_role
+      Role: !GetAtt LambdaExecutionRole.Arn 
+      CodeUri: .
 
   LambdaExecutionRole:
     Type: AWS::IAM::Role
@@ -45,6 +52,7 @@ Resources:
             Principal:
               Service: lambda.amazonaws.com
             Action: sts:AssumeRole
+
       Policies:
         - PolicyName: logs_policy
           PolicyDocument:
@@ -75,9 +83,18 @@ Resources:
                   - wafv2:UpdateWebACL
                   - wafv2:ListWebACLs
                   - wafv2:GetWebACL
-                  - wafv2:DeleteRule
-                  - wafv2:CreateRule
-                Resource: 'arn:aws:wafv2:us-east-1:*:global/webacl/*/*'
+                Resource: 
+                  - arn:aws:wafv2:us-east-1:*:global/webacl/*/*
+
+        - PolicyName: sts_policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sts:*
+                Resource: 
+                  - arn:aws:iam::685339645368:role/monitor-waf-rule
 
   SchedulerExecutionRole:
     Type: AWS::IAM::Role
