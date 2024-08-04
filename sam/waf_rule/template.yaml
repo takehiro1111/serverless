@@ -158,7 +158,7 @@ Resources:
     Properties:
       Name: waf-monitor
       Description: Cron to monitor Lambda every hour
-      ScheduleExpression: cron(30 23 ? * MON-FRI *)
+      ScheduleExpression: cron(07 22 ? * MON-SUN *)
       ScheduleExpressionTimezone: Asia/Tokyo
       State: ENABLED
       FlexibleTimeWindow:

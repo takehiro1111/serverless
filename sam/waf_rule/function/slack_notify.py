@@ -39,13 +39,13 @@ def send_slack_notification(web_acl_name,status,rule_name = 'CountOtherRegions' 
   except requests.exceptions.RequestException as e:
     raise ValueError(f"Request to Slack returned an error: {e}")
 
-
+# RegionalLimitのルールが設定されていない場合は、日次でSlack通知を行う
 def monitor_result_slack_notification(missing_rule_accounts):
   webhook_url = get_ssm_parameter()
 
   result_message = {
-    'text': f'Missing RegionalLimit rule in the following WebACLs:\n' +
-            '\n'.join([f"Account: {rule['account_name']},Account_ID: {rule['account_id']}, WebACL: {rule['web_acl_name']}" for rule in missing_rule_accounts])
+    'text': f'WebACL RegionalLimit are not enabled:rotating_light:\n' +
+            '\n'.join([f"Account: {rule['account_name']}/ID: {rule['account_id']}/WebACL: {rule['web_acl_name']}" for rule in missing_rule_accounts])
   }
 
   try:
