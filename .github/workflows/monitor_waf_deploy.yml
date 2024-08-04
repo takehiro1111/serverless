@@ -37,7 +37,7 @@ jobs:
           role-session-name: GithubActions_AssumeRole_daily_monitor_waf_deploy
           #CloudTrailログ等の監査ログでどのセッションがどの操作を行ったのかを追跡するために設定。
       - run: sam build --use-container
-      - run: sam deploy
+      - run: sam deploy --no-confirm-changeset --no-fail-on-empty-changeset 
 
       - if: always()
         name: Slack Notification
