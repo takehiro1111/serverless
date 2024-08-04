@@ -1,0 +1,53 @@
+name: daily_monitor_waf_deploy
+
+on:
+  push:
+    branches:
+      - 'main'
+    paths:
+      - 'sam/waf_rule'
+  workflow_dispatch:
+
+env:
+  AWS_REGION: ap-northeast-1
+  SLACK_ICON: terraform_logo.png
+  IAM_ROLE_ARN: arn:aws:iam::421643133281:role/deploy-github-actions
+  SLACK_CHANNEL_NAME: lambda_notify
+  WEBHOOK_URL: https://hooks.slack.com/services/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
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  sam:
+    name: sam deploy
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sam/waf_rule
+    steps: # ref:https://docs.aws.amazon.com/ja_jp/serverless-application-model/latest/developerguide/deploying-using-github.html
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v3
+      - uses: aws-actions/setup-sam@v2
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{env.AWS_REGION}}
+          role-to-assume: ${{ env.IAM_ROLE_ARN }}
+          role-session-name: GithubActions_AssumeRole_daily_monitor_waf_deploy
+          #CloudTrailログ等の監査ログでどのセッションがどの操作を行ったのかを追跡するために設定。
+      - run: sam build --use-container
+      - run: sam deploy
+
+      - if: always()
+        name: Slack Notification
+        uses: rtCamp/action-slack-notify@v2.2.0
+        env:
+          SLACK_CHANNEL: ${{ env.SLACK_CHANNEL_NAME }}
+          SLACK_COLOR: ${{ job.status }}
+          SLACK_USERNAME: SAM
+          SLACK_MESSAGE: 'deploy success'
+          SLACK_ICON: ${{ env.SLACK_ICON }}
+          SLACK_TITLE: SAM Result🚀
+          SLACK_WEBHOOK: ${{ env.WEBHOOK_URL }}
+
