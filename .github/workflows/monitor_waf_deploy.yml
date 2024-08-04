@@ -12,7 +12,7 @@ env:
   AWS_REGION: ap-northeast-1
   SLACK_ICON: terraform_logo.png
   IAM_ROLE_ARN: arn:aws:iam::421643133281:role/deploy-github-actions
-  SLACK_CHANNEL_NAME: lambda_notify
+  SLACK_CHANNEL_NAME: #lambda_notify
   WEBHOOK_URL: https://hooks.slack.com/services/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
 
 permissions:
@@ -43,7 +43,7 @@ jobs:
         name: Slack Notification
         uses: rtCamp/action-slack-notify@v2.2.0
         env:
-          SLACK_CHANNEL: ${{ env.SLACK_CHANNEL_NAME }}
+          SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL_NAME }}
           SLACK_COLOR: ${{ job.status }}
           SLACK_USERNAME: SAM
           SLACK_MESSAGE: 'deploy success'
