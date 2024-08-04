@@ -13,7 +13,7 @@ env:
   SLACK_ICON: terraform_logo.png
   IAM_ROLE_ARN: arn:aws:iam::421643133281:role/deploy-github-actions
   SLACK_CHANNEL_NAME: lambda_notify
-  WEBHOOK_URL: https://hooks.slack.com/services/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
+  WEBHOOK_URL: https://hooks.slack.com/services/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
 
 permissions:
   id-token: write
