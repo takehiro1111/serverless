@@ -6,7 +6,7 @@ ssm = boto3.client('ssm','ap-northeast-1')
 def get_ssm_parameter()-> str:
   try:
     response = ssm.get_parameter(
-      Name='/waf_update_rule/SLACK_WEBHOOK',
+      Name='/common/waf-monitor/SLACK_WEBHOOK',
       WithDecryption=True
     )
     return response['Parameter']['Value']

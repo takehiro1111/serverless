@@ -16,35 +16,42 @@ Globals:
       LogFormat: JSON
 
 Resources:
-  DeleteWAFRuleFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: waf_delete.lambda_handler
-      Role: !GetAtt LambdaExecutionRole.Arn
+  # DeleteWAFRuleFunction:
+  #   Type: AWS::Serverless::Function
+  #   Properties:
+  #     Handler: waf_delete.lambda_handler
+  #     Role: !GetAtt LambdaExecutionRole.Arn
 
-  ReCreateWAFRuleFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: waf_recreate.lambda_handler
-      Role: !GetAtt LambdaExecutionRole.Arn
+  # ReCreateWAFRuleFunction:
+  #   Type: AWS::Serverless::Function
+  #   Properties:
+  #     Handler: waf_recreate.lambda_handler
+  #     Role: !GetAtt LambdaExecutionRole.Arn
   
   MonitorWAFRuleFunction:
     Type: AWS::Serverless::Function
     Properties:
+      FunctionName: monitor-waf-regionallimit
       Handler: daily_monitor.lambda_handler
-      Role: !GetAtt LambdaExecutionRole.Arn 
+      Role: !GetAtt LambdaExecutionRole.Arn
 
-  testmonitorfunction:
-    Type: AWS::Serverless::Function
+  MonitorWAFLogGroup:
+    Type: AWS::Logs::LogGroup
     Properties:
-      Handler: test.assume_role
-      Role: !GetAtt LambdaExecutionRole.Arn 
-      CodeUri: .
+      LogGroupName: !Sub /aws/lambda/${MonitorWAFRuleFunction}
+      RetentionInDays: 7
+
+  # testmonitorfunction:
+  #   Type: AWS::Serverless::Function
+  #   Properties:
+  #     Handler: test.assume_role
+  #     Role: !GetAtt LambdaExecutionRole.Arn 
+  #     CodeUri: .
 
   LambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: waf_rule_update_lambda_execution_role
+      RoleName: monitor-waf-rule-lambda-execution-role
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -80,7 +87,7 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                  - wafv2:UpdateWebACL
+                  # - wafv2:UpdateWebACL
                   - wafv2:ListWebACLs
                   - wafv2:GetWebACL
                 Resource: 
@@ -99,6 +106,7 @@ Resources:
   SchedulerExecutionRole:
     Type: AWS::IAM::Role
     Properties:
+      RoleName: monitor-waf-rule-event-schedule-role
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -199,7 +207,7 @@ Resources:
   SlackWebhookParameter:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: /waf_update_rule/SLACK_WEBHOOK
+      Name: /common/waf-monitor/SLACK_WEBHOOK
       Type: String # CloudFromationではSecureStringがサポートされていない。
       Value: '画面上で設定する'
 
@@ -224,3 +232,8 @@ Resources:
   # EventRuleArn:
   #   Description: ARN of the EventBridge rule
   #   Value: !GetAtt WafRuleUpdateEventRule.Arn
+
+Outputs:
+  MonitorWAFFunctionName:
+    Description: "Name of the Lambda function"
+    Value: !Ref MonitorWAFRuleFunction

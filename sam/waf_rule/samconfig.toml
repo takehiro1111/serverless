@@ -18,10 +18,11 @@ capabilities = "CAPABILITY_NAMED_IAM"
 confirm_changeset = true
 resolve_s3 = false
 s3_bucket = "sam-deploy-421643133281"
-s3_prefix = "waf-rule-update"
+s3_prefix = "waf-rule-monitor"
 region = "ap-northeast-1"
 disable_rollback = true
 image_repositories = []
+stack_name = "waf-rule-monitor"
 
 [default.package.parameters]
 resolve_s3 = true
