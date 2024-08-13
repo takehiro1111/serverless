@@ -5,9 +5,9 @@ codeuri = "/Users/take/github/serverless/sam/waf-update/function"
 runtime = "python3.12"
 architecture = "x86_64"
 handler = "delete_waf.lambda_handler"
-source_hash = "3be485c7d29be30035e73d38deb49953bd00b07585018c99bca1427fd5a8e744"
+source_hash = "cf16654466fb788009b6fb7064553c80e375aae47e63e2b1ecde74c4272f54df"
 manifest_hash = ""
 packagetype = "Zip"
-functions = ["DeleteWAFRuleFunction", "ReCreateWAFRuleFunction"]
+functions = ["DeleteWAFRuleFunction", "ReCreateWAFRuleFunction", "CronUpdateEventWAFInfoFunction"]
 
 [layer_build_definitions]

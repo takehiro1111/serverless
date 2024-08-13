@@ -30,6 +30,13 @@ Resources:
       Handler: recreate_waf.lambda_handler
       Role: !GetAtt LambdaExecutionRole.Arn
 
+  CronUpdateEventWAFInfoFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: cron-update-waf-info
+      Handler: cron_update_waf_info.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+
   # UpdateWAFLogGroup:
   #   Type: AWS::Logs::LogGroup
   #   Properties:
