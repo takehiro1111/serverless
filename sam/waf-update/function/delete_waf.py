@@ -7,6 +7,12 @@ import logging
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+# configの取得
+with open("config.json","r") as f:
+  config =json.load(f)
+  account = config.get("account")
+  account_id = config.get("account_id")
+
 waf = boto3.client('wafv2','us-east-1')
 
 def lambda_handler(event, context):
@@ -29,7 +35,7 @@ def lambda_handler(event, context):
     logger.info(f'Get Web ACL {web_acl_name} retrieved successfully')
   except Exception as e:
       logger.error(f'Error retrieving Get Web ACL: {e}')
-      send_slack_notification('Failed', web_acl_name, rule_name_to_delete, 'Retrieve')
+      send_slack_notification('Failed',account, account_id, web_acl_name, 'get_web_acl',":x:")
       raise e
 
 # Filter out the rule to delete
@@ -48,12 +54,12 @@ def lambda_handler(event, context):
     )
     logger.info(f'Rule {rule_name_to_delete} deleted successfully from WebACL {web_acl_name}')
     # Send notification to Slack
-    send_slack_notification('Success',web_acl_name, rule_name_to_delete, 'Delete')
+    send_slack_notification('Success',account,account_id,web_acl_name,'Delete',":white_check_mark:")
 
   except Exception as e:
     logger.error(f"Error deleting Web ACL Rule: {e}")
     # Send error notification to Slack
-    send_slack_notification('Faliled',web_acl_name, rule_name_to_delete,'Delete')
+    send_slack_notification('Faliled',account,account_id,web_acl_name,'Delete',":x:")
     raise e
 
   return response

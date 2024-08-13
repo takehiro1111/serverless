@@ -21,13 +21,33 @@ def get_ssm_parameter()-> str:
     raise ValueError(f"Failed to get SSM parameter: {e}")
   
 
-def send_slack_notification(process,web_acl_name,rule_name,status):
+def send_slack_notification(process,account,account_id,web_acl_name,status,emoji):
   webhook_url = get_ssm_parameter()
 
   message = {
-    'text': f'{process} WebACL:{web_acl_name} / Rule:{rule_name} / Status: {status}'
+    "blocks": [
+      {
+        "type": "section",
+        "text": {
+          "type": "mrkdwn",
+          "text": f"*{emoji}{process} WebACL RegionalLimit : `{status}`*",
+        },
+      },
+      {
+        "type": "divider"
+      }
+    ]
   }
-
+  message["blocks"].append(
+      {
+        "type": "section",
+        "text": {
+            "type": "mrkdwn",
+            "text": f"*Account:* `{account}` / *ID:* `{account_id}` / *WebACL:* `{web_acl_name}`"
+        }
+      }
+    )
+  
   try:
     response = requests.post(
       webhook_url, 

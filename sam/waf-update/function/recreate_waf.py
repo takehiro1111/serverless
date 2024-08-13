@@ -9,6 +9,13 @@ waf = boto3.client('wafv2','us-east-1')
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+# configの取得
+with open("config.json","r") as f:
+  config =json.load(f)
+  account = config.get("account")
+  account_id = config.get("account_id")
+
+
 def lambda_handler(event, context):
   logger.info('Received event: %s', json.dumps(event))
 
@@ -32,7 +39,7 @@ def lambda_handler(event, context):
 
   except Exception as e:
     logger.error(f'Error retrieving Get Web ACL: {e}')
-    send_slack_notification('Failed', web_acl_name, recreate_rule_name, 'Retrieve')
+    send_slack_notification('Failed',account, account_id, web_acl_name, 'get_web_acl',":x:")
     raise e
   
   # Add the New Rule
@@ -65,12 +72,12 @@ def lambda_handler(event, context):
     logger.info(f'Rule {recreate_rule_name} recreated successfully from WebACL {web_acl_name}')
 
   # Send notification to Slack
-    send_slack_notification("Success",web_acl_name,recreate_rule_name,'Recreate')
+    send_slack_notification("Success",account,account_id,web_acl_name,'Recreate',":white_check_mark:")
 
   except Exception as e:
     logger.error(f"Error recreating Web ACL Rule: {e}")
   # Send error notification to Slack
-    send_slack_notification("Failed",web_acl_name,recreate_rule_name,'Recreate')
+    send_slack_notification("Failed",account,account_id,web_acl_name,'Recreate',":x:")
     raise e
   
   return response
