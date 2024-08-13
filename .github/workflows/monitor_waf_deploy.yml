@@ -6,6 +6,7 @@ on:
       - 'main'
     paths:
       - 'sam/waf_rule/**'
+      - 'sam/waf-update/**'
   workflow_dispatch:
 
 env:
@@ -37,6 +38,21 @@ jobs:
           #CloudTrailログ等の監査ログでどのセッションがどの操作を行ったのかを追跡するために設定。
       - run: sam build --use-container
       - run: sam deploy --no-confirm-changeset --no-fail-on-empty-changeset 
+
+      #   name: sam update
+      # - uses: actions/checkout@v4
+      # - uses: actions/setup-python@v3
+      # - uses: aws-actions/setup-sam@v2
+      # - uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     aws-region: ${{env.AWS_REGION}}
+      #     role-to-assume: ${{ env.IAM_ROLE_ARN }}
+      #     role-session-name: GithubActions_AssumeRole_update_waf_deploy
+      #     #CloudTrailログ等の監査ログでどのセッションがどの操作を行ったのかを追跡するために設定。
+      # - run: sam build --use-container
+      #   working-directory: sam/waf-update
+      # - run: sam deploy --no-confirm-changeset --no-fail-on-empty-changeset 
+      #   working-directory: sam/waf-update
 
       - if: always()
         name: Slack Notification
