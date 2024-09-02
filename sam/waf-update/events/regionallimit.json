@@ -1,0 +1,40 @@
+{
+  "WebACL": {
+    "Name": "regionallimit",
+    "Id": "014e6131-0208-4572-b04f-04bd44cd4efe",
+    "ARN": "arn:aws:wafv2:us-east-1:421643133281:global/webacl/regionallimit/014e6131-0208-4572-b04f-04bd44cd4efe",
+    "DefaultAction": {
+      "Allow": {}
+    },
+    "Description": "Example WebACL",
+    "Rules": {
+      "RegionalLimit": {
+        "Name": "RegionalLimit",
+        "Priority": 0,
+        "Statement": {
+          "RuleGroupReferenceStatement": {
+            "ARN": "arn:aws:wafv2:us-east-1:421643133281:global/rulegroup/RegionalLimit/b3cc4ea8-5120-4b6e-911e-86a79f632b24"
+          }
+        },
+        "OverrideAction": {
+          "None": {}
+        },
+        "VisibilityConfig": {
+          "SampledRequestsEnabled": true,
+          "CloudWatchMetricsEnabled": true,
+          "MetricName": "RegionalLimit"
+        }
+      }
+    },
+    "VisibilityConfig": {
+      "SampledRequestsEnabled": true,
+      "CloudWatchMetricsEnabled": true,
+      "MetricName": "regionallimit"
+    },
+    "Capacity": 50,
+    "ManagedByFirewallManager": false,
+    "LabelNamespace": "awswaf:421643133281:webacl:regionallimit:",
+    "Scope": "CLOUDFRONT"
+  },
+  "LockToken": "9293827f-103e-4d2a-b573-521909b47dc7"
+}

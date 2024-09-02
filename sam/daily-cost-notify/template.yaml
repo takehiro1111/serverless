@@ -1,0 +1,143 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Daily cost notifications to Slack
+
+Globals:
+  Function:
+    Timeout: 60
+    MemorySize: 128
+    CodeUri: function/
+    Runtime: python3.12
+    Architectures:
+        - x86_64
+    LoggingConfig:
+      LogFormat: JSON
+
+Resources:  
+  CostNotifyFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: daily-cost-notify
+      Handler: notify_cost.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+
+  CostNotifyLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${CostNotifyFunction}
+      RetentionInDays: 7
+
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: cost-notify-lambda-execution-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+
+      Policies:
+        - PolicyName: logs_policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: 'arn:aws:logs:ap-northeast-1:*:log-group:*:*'
+
+        - PolicyName: ssm_policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                Resource: 'arn:aws:ssm:ap-northeast-1:*:*'
+
+        - PolicyName: ce_policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ce:GetCostAndUsage
+                  - ce:GetCostForecast
+                  - ce:GetDimensionValues
+                  - ce:GetReservationUtilization
+                  - ce:GetRightsizingRecommendation
+                  - ce:GetSavingsPlansUtilization
+                  - ce:GetTags
+                Resource: '*'
+
+        # - PolicyName: sts_policy
+        #   PolicyDocument:
+        #     Version: '2012-10-17'
+        #     Statement:
+        #       - Effect: Allow
+        #         Action:
+        #           - sts:*
+        #         Resource: 
+        #           - arn:aws:iam::685339645368:role/monitor-waf-rule
+
+  SchedulerExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: cost-notify-event-schedule-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: scheduler.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: InvokeLambdaPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 'lambda:InvokeFunction'
+                Resource: !GetAtt CostNotifyFunction.Arn
+
+  CostNotifyCronEventBridge:
+    Type: AWS::Scheduler::Schedule
+    Properties:
+      Name: cost-notify
+      Description: Cron to monitor Lambda every hour
+      ScheduleExpression: cron(07 22 ? * MON-SUN *)
+      ScheduleExpressionTimezone: Asia/Tokyo
+      State: ENABLED
+      FlexibleTimeWindow:
+          MaximumWindowInMinutes: 15
+          Mode: "FLEXIBLE"
+      Target:
+        Arn: !GetAtt CostNotifyFunction.Arn
+        RoleArn: !GetAtt SchedulerExecutionRole.Arn
+
+  CostNotifyLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref CostNotifyFunction
+      Action: lambda:InvokeFunction
+      Principal: scheduler.amazonaws.com
+      SourceArn: !GetAtt CostNotifyCronEventBridge.Arn
+
+
+  SlackWebhookParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /common/cost-notify/SLACK_WEBHOOK
+      Type: String # CloudFromationではSecureStringがサポートされていない。
+      Value: '画面上で設定する'
+
+Outputs:
+  CostNotifyFunctionName:
+    Description: "Name of the Lambda function"
+    Value: !Ref CostNotifyFunction
