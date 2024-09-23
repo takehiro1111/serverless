@@ -1,0 +1,69 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Sample SAM Template for DYnamoDB APP
+
+Globals:
+  Function:
+    Timeout: 60
+    MemorySize: 128
+    CodeUri: function/
+    Runtime: python3.12
+    Architectures:
+        - x86_64
+
+    LoggingConfig:
+      LogFormat: JSON
+
+Resources:
+  TasksFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: tasks-dynamodb
+      Handler: tasks.lambda_handler
+      Role: !Ref LambdaExecutionRoleArn
+
+  TasksGetFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: tasks-dynamodb-get
+      Handler: get_item.lambda_handler
+      Role: !Ref LambdaExecutionRoleArn
+
+  UpdateItemsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: update-items
+      Handler: update_item.lambda_handler
+      Role: !Ref LambdaExecutionRoleArn
+
+  DeleteItemsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: Delete-items
+      Handler: delete_item.lambda_handler
+      Role: !Ref LambdaExecutionRoleArn
+
+  GetItemsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: Get-Items
+      Handler: show_tasks.lambda_handler
+      Role: !Ref LambdaExecutionRoleArn
+
+  TasksLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${TasksFunction}
+      RetentionInDays: 7
+
+Outputs:
+  TasksWAFFunctionName:
+    Description: "Name of the Lambda function"
+    Value: !Ref TasksFunction
+
+Parameters:
+  LambdaExecutionRoleArn:
+    Type: String
+    Description: "既存のLambda実行ロールのARN"
+    Default: arn:aws:iam::421643133281:role/lambda-execute-role
