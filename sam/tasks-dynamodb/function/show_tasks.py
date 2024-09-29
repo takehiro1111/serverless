@@ -7,7 +7,13 @@ table_name = 'tasks'
 table = dynamodb.Table(table_name)
 
 def lambda_handler(event,context):
-  primary_key = event["id"]
+  primary_key = event.get("pathParameters",{}).get("id")
+
+  if not primary_key:
+    return{
+      'statusCode':404,
+      'body':json.dumps('ID does not exist')
+    }
 
   try:
     response = table.get_item(
