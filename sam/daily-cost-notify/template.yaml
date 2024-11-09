@@ -133,7 +133,7 @@ Resources:
   SlackWebhookParameter:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: /common/cost-notify/SLACK_WEBHOOK
+      Name: /development/daily-cost-notify/SLACK_WEBHOOK_URL
       Type: String # CloudFromationではSecureStringがサポートされていない。
       Value: '画面上で設定する'
 
