@@ -1,6 +1,6 @@
 import json
 import boto3
-from datetime import datetime,timedelta,timezone
+from datetime import datetime,timezone
 from slack_notify import send_slack_notification
 
 def get_costs():
