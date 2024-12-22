@@ -1,0 +1,27 @@
+CRITICAL:root:crit
+ERROR:root:error
+WARNING:root:warn
+INFO:root:info:tutorial
+INFO:root:info test
+INFO:root:info test
+INFO:root:test %stest
+CRITICAL:root:crit
+ERROR:root:error
+WARNING:root:warn
+INFO:root:info:tutorial
+INFO:root:info test
+INFO:root:info test
+INFO:root:test %stest
+CRITICAL:root:crit
+ERROR:root:error
+WARNING:root:warn
+INFO:root:info:tutorial
+INFO:root:info test
+INFO:root:info test
+INFO:root:test test test2
+INFO:root:test test
+INFO:root:test test-test2
+CRITICAL:root:crit
+ERROR:root:error
+WARNING:root:warn
+INFO:root:info:tutorial
