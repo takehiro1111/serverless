@@ -8,7 +8,7 @@ app = Flask(__name__)
 @app.route("/")
 @app.route("/index")
 def index():
-    name = request.args.get("name") # /index?name="hoge"で値を取得している。
+    name = request.args.get("name") # /index?name="hoge"でname=の値を取得している。
     return render_template("index.html",key=name) # keyは、index.htmlの{{key}}とリンクしている.
   
 
