@@ -8,8 +8,9 @@ app = Flask(__name__)
 @app.route("/")
 @app.route("/index")
 def index():
-    user_name = request.args.get("name")
-    return render_template("index.html",name=user_name)
+    name = request.args.get("name") # /index?name="hoge"で値を取得している。
+    return render_template("index.html",key=name) # keyは、index.htmlの{{key}}とリンクしている.
+  
 
 
 if __name__ == "__main__":
