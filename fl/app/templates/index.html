@@ -6,7 +6,13 @@
   <title>{{key}}</title>
 </head>
 <body>
+  {% if key=="tanaka" %}
   <h1>Webアプリ初心者のFlaskチュートリアル</h1>
+  {% elif key %}
+  <h1>{{name}}elifで指定</h1>
+  {% else %}
+  <h1>該当なし</h1>
+  {% endif %}
   <img src="/static/img/soccer.png" alt="サッカーボールの画像">
 </body>
 </html>

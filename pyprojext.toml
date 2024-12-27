@@ -1,3 +1,0 @@
-[tool.isort]
-profile = "black"  # Blackとの互換性を保つ
-line_length = 79 # PEP 8に準拠
