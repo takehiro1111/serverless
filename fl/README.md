@@ -8,7 +8,7 @@ Flask チュートリアル
 - Python 3.x  
 - [Poetry](https://python-poetry.org/docs/)  
 
-## セットアップ
+## 環境構築
 - ref: https://info.drobe.co.jp/blog/engineering/poetry-python-project
 1. **Poetry のインストール**  
 ```zsh
@@ -31,10 +31,11 @@ poetry install
 
 5. **Flaskの追加**  
 ```zsh
-poetry add flask=2.3.3
+poetry add flask=2.3.3poetry
+
 ```
 
 6. **実行**
 ```zsh
-poetry run python app.py
+python3 run.py
 ```

@@ -1,18 +1,40 @@
 <!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{key}}</title>
-</head>
-<body>
-  {% if key=="tanaka" %}
-  <h1>Webアプリ初心者のFlaskチュートリアル</h1>
-  {% elif key %}
-  <h1>{{name}}elifで指定</h1>
-  {% else %}
-  <h1>該当なし</h1>
-  {% endif %}
-  <img src="/static/img/soccer.png" alt="サッカーボールの画像">
-</body>
+<html>
+    <head>
+        <title>{{name}}</title>
+    </head>
+    <body>
+    {% if name == "tanaka" %}
+    <h1>スペシャル{{name}}神社</h1>
+    {% elif name %}
+    <h1>{{name}}神社</h1>
+    {% else %}
+    <h1>ただの神社</h1>
+    {% endif %}
+    <form action="/index" method="POST">
+        <input type="text" name="{{name}}" placeholder="Enter name">
+        <input type="submit" value="Submit">
+    </form>
+    <img src="/static/img/soccer.png" alt="サッカーボール">
+    <form action="/add" method="post">
+      <input type="text" name="title" placeholder="title">
+      <input type="text" name="body" placeholder="body">
+      <input type="submit" value="Add">
+  </form>
+  <form action="/update" method="post" id="update">
+    <input type="text" name="title" placeholder="title">
+    <input type="text" name="body" placeholder="body">
+    <input type="submit" value="Update">
+    {% for onegai in records %}
+    <div>
+        <input type="radio" name="update" form="update" value={{onegai.id}}>
+        <input type="checkbox" name="delete" form="delete" value={{onegai.id}}>
+        {{onegai.title}}：{{onegai.body}}（{{onegai.date}}）
+    </div>
+    {% endfor %}
+</form>
+<form action="/delete" method="post" id="delete">
+    <input type="submit" value="Delete Selected All Onegai">
+</form>
+    </body>
 </html>
