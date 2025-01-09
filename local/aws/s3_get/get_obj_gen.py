@@ -20,7 +20,7 @@ logger.addHandler(stream_handler)
 def assume_role(*args, **kwargs):
     """
     各AWSアカウントの認証情報を取得する。
-    一時的な検証用のコードのため、IAMロールではなく、認証情報をベタ書きしている...
+    一時的な検証用のコードのため、IAMロールではなく、認証情報を貼り付ける構成にしている...
     """
     sts = boto3.client("sts")
     # id_info = sts.get_caller_identity()
