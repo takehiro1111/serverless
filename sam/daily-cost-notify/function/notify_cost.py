@@ -22,14 +22,14 @@ def get_costs():
     "End": end_date
   },
   Granularity = "DAILY",
-  Metrics = ["UnblendedCost"]
+  Metrics = ["UnbendedCost"]
 )
 
 # コストデータの取得
 # 月初からの合計コストを計算
   total_cost = 0
   for result in response["ResultsByTime"]:
-    daily_cost = float(result["Total"]["UnblendedCost"]["Amount"])
+    daily_cost = float(result["Total"]["UnbendedCost"]["Amount"])
     total_cost += daily_cost
 
   return total_cost
