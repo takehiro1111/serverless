@@ -1,12 +1,12 @@
-name: daily_monitor_waf_deploy
+name: s3 Conversion
+run-name: ${{ github.workflow }} by @${{ github.actor }}
 
 on:
   push:
     branches:
       - 'main'
     paths:
-      - 'sam/waf_rule/**'
-      - 'sam/waf-update/**'
+      - 'sam/s3-conversion/func/**'
   workflow_dispatch:
 
 env:
@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: sam/waf_rule
+        working-directory: sam/s3-conversion
     timeout-minutes: 5
     steps: # ref:https://docs.aws.amazon.com/ja_jp/serverless-application-model/latest/developerguide/deploying-using-github.html
       - uses: actions/checkout@v4
@@ -51,9 +51,7 @@ jobs:
           role-session-name: GithubActions_AssumeRole_update_waf_deploy
           #CloudTrailログ等の監査ログでどのセッションがどの操作を行ったのかを追跡するために設定。
       - run: sam build --use-container
-        working-directory: sam/waf-update
       - run: sam deploy --no-confirm-changeset --no-fail-on-empty-changeset 
-        working-directory: sam/waf-update
 
       - if: always()
         name: Slack Notification
@@ -66,4 +64,3 @@ jobs:
           SLACK_ICON: ${{ env.SLACK_ICON }}
           SLACK_TITLE: SAM Result🚀
           SLACK_WEBHOOK: ${{ secrets.WEBHOOK_URL }}
-
