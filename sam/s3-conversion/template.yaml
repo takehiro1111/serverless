@@ -1,13 +1,13 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  Daily cost notifications to Slack
+  S3Conversion
 
 Globals:
   Function:
     Timeout: 60
     MemorySize: 128
-    CodeUri: function/
+    CodeUri: func
     Runtime: python3.12
     Architectures:
         - arm64
@@ -46,7 +46,7 @@ Resources:
   #######################################################
   # Cloudwatch Logs
   #######################################################
-  CostNotifyLogGroup:
+  S3ConversionLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub /aws/lambda/${S3ConversionFunction}
@@ -58,7 +58,7 @@ Resources:
   LambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: cost-notify-lambda-execution-role
+      RoleName: s3-conversion-lambda-execution-role
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -138,47 +138,4 @@ Resources:
       Tags:
         - Key: Env
           Value: SAM
-
-  # CostNotifyLambdaPermission:
-  #   Type: AWS::Lambda::Permission
-  #   Properties:
-  #     FunctionName: !Ref CostNotifyFunction
-  #     Action: lambda:InvokeFunction
-  #     Principal: scheduler.amazonaws.com
-  #     SourceArn: !GetAtt CostNotifyCronEventBridge.Arn
-
-  # SchedulerExecutionRole:
-  #   Type: AWS::IAM::Role
-  #   Properties:
-  #     RoleName: cost-notify-event-schedule-role
-  #     AssumeRolePolicyDocument:
-  #       Version: '2012-10-17'
-  #       Statement:
-  #         - Effect: Allow
-  #           Principal:
-  #             Service: scheduler.amazonaws.com
-  #           Action: sts:AssumeRole
-  #     Policies:
-  #       - PolicyName: InvokeLambdaPolicy
-  #         PolicyDocument:
-  #           Version: '2012-10-17'
-  #           Statement:
-  #             - Effect: Allow
-  #               Action: 'lambda:InvokeFunction'
-  #               Resource: !GetAtt CostNotifyFunction.Arn
-
-  # CostNotifyCronEventBridge:
-  #   Type: AWS::Scheduler::Schedule
-  #   Properties:
-  #     Name: cost-notify
-  #     Description: Cron to monitor Lambda every hour
-  #     ScheduleExpression: cron(07 22 ? * MON-SUN *)
-  #     ScheduleExpressionTimezone: Asia/Tokyo
-  #     State: ENABLED
-  #     FlexibleTimeWindow:
-  #         MaximumWindowInMinutes: 15
-  #         Mode: "FLEXIBLE"
-  #     Target:
-  #       Arn: !GetAtt CostNotifyFunction.Arn
-  #       RoleArn: !GetAtt SchedulerExecutionRole.Arn
 
