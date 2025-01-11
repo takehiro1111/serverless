@@ -10,7 +10,7 @@ Globals:
     CodeUri: func
     Runtime: python3.12
     Architectures:
-        - arm64
+        - x86_64
     LoggingConfig:
       LogFormat: JSON
 
@@ -42,6 +42,21 @@ Resources:
       Environment:
         Variables:
           OUTPUTBUCKET: !Ref TransferBucket
+      # Layers:
+      #   - !Ref PyminiZipLayer
+
+  # PyminiZipLayer:
+  #   Type: AWS::Serverless::LayerVersion
+  #   Properties:
+  #     LayerName: pyminizip-layer
+  #     Description: pyminizip
+  #     ContentUri: 'layers/pyminizip/'
+  #     CompatibleRuntimes:
+  #       - python3.12
+  #   Metadata:
+  #     BuildMethod: python3.12
+  #     BuildProperties:
+  #         UseContainer: true
 
   #######################################################
   # Cloudwatch Logs

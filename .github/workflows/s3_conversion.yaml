@@ -7,6 +7,7 @@ on:
       - 'main'
     paths:
       - 'sam/s3-conversion/func/**'
+      - '.github/workflows/s3_conversion.yaml'
   workflow_dispatch:
 
 env:
@@ -26,7 +27,7 @@ jobs:
     defaults:
       run:
         working-directory: sam/s3-conversion
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps: # ref:https://docs.aws.amazon.com/ja_jp/serverless-application-model/latest/developerguide/deploying-using-github.html
       - uses: actions/checkout@v4
 
