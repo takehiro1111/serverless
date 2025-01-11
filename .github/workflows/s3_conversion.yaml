@@ -13,7 +13,7 @@ env:
   AWS_REGION: ap-northeast-1
   SLACK_ICON: sam/waf_rule/SAM_acorn_1.0dd761f4fca5f2e7007a323b74631ec71b03a92d.png
   IAM_ROLE_ARN: arn:aws:iam::650251692423:role/deploy-github-actions
-  SLACK_CHANNEL_NAME: #lambda_notify
+  SLACK_CHANNEL_NAME: lambda_notify
 
 permissions:
   id-token: write
@@ -29,29 +29,35 @@ jobs:
     timeout-minutes: 10
     steps: # ref:https://docs.aws.amazon.com/ja_jp/serverless-application-model/latest/developerguide/deploying-using-github.html
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v3
-      - uses: aws-actions/setup-sam@v2
-      - uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: ${{env.AWS_REGION}}
-          role-to-assume: ${{ env.IAM_ROLE_ARN }}
-          role-session-name: GithubActions_AssumeRole_daily_monitor_waf_deploy
-          #CloudTrailログ等の監査ログでどのセッションがどの操作を行ったのかを追跡するために設定。
-      - run: sam build --use-container
-      - run: sam deploy --no-confirm-changeset --no-fail-on-empty-changeset 
 
-        name: sam update
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v3
+      - uses: actions/setup-python@v4
+
+      - uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+
+      # SAMビルドのキャッシュ
+      - uses: actions/cache@v2
+        with:
+          path: .aws-sam/build
+          key: ${{ runner.os }}-sam-build-${{ hashFiles('**/*.py') }}
+
       - uses: aws-actions/setup-sam@v2
+
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{env.AWS_REGION}}
           role-to-assume: ${{ env.IAM_ROLE_ARN }}
-          role-session-name: GithubActions_AssumeRole_update_waf_deploy
+          role-session-name: ${{ github.workflow }}
           #CloudTrailログ等の監査ログでどのセッションがどの操作を行ったのかを追跡するために設定。
-      - run: sam build --use-container
-      - run: sam deploy --no-confirm-changeset --no-fail-on-empty-changeset 
+
+      - name: SAM Build
+        run: sam build --use-container
+        if: success()
+      - name: SAM Deploy
+        run: sam deploy --no-confirm-changeset --no-fail-on-empty-changeset
+        if: success()
 
       - if: always()
         name: Slack Notification
