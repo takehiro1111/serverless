@@ -1,11 +1,12 @@
-name: WAF Rule Update
+name: s3 Conversion
 run-name: ${{ github.workflow }} by @${{ github.actor }}
+
 on:
   push:
     branches:
       - 'main'
     paths:
-      - 'sam/waf_rule/**'
+      - 'sam/s3-conversion/func/**'
   workflow_dispatch:
 
 env:
@@ -24,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: sam/waf_rule
+        working-directory: sam/s3-conversion
     timeout-minutes: 5
     steps: # ref:https://docs.aws.amazon.com/ja_jp/serverless-application-model/latest/developerguide/deploying-using-github.html
       - uses: actions/checkout@v4
@@ -63,4 +64,3 @@ jobs:
           SLACK_ICON: ${{ env.SLACK_ICON }}
           SLACK_TITLE: SAM Result🚀
           SLACK_WEBHOOK: ${{ secrets.WEBHOOK_URL }}
-
