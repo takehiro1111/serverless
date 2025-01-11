@@ -12,7 +12,7 @@ on:
 env:
   AWS_REGION: ap-northeast-1
   SLACK_ICON: sam/waf_rule/SAM_acorn_1.0dd761f4fca5f2e7007a323b74631ec71b03a92d.png
-  IAM_ROLE_ARN: arn:aws:iam::650251692423:role/deploy-github-actions
+  IAM_ROLE_ARN: arn:aws:iam::685339645368:role/deploy-github-actions
   SLACK_CHANNEL_NAME: lambda_notify
 
 permissions:
