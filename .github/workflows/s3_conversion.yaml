@@ -1,4 +1,4 @@
-name: s3 Conversion
+name: s3-Conversion
 run-name: ${{ github.workflow }} by @${{ github.actor }}
 
 on:
