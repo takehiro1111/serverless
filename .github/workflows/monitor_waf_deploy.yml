@@ -1,12 +1,11 @@
-name: daily_monitor_waf_deploy
-
+name: WAF Rule Update
+run-name: ${{ github.workflow }} by @${{ github.actor }}
 on:
   push:
     branches:
       - 'main'
     paths:
       - 'sam/waf_rule/**'
-      - 'sam/waf-update/**'
   workflow_dispatch:
 
 env:
@@ -51,9 +50,7 @@ jobs:
           role-session-name: GithubActions_AssumeRole_update_waf_deploy
           #CloudTrailログ等の監査ログでどのセッションがどの操作を行ったのかを追跡するために設定。
       - run: sam build --use-container
-        working-directory: sam/waf-update
       - run: sam deploy --no-confirm-changeset --no-fail-on-empty-changeset 
-        working-directory: sam/waf-update
 
       - if: always()
         name: Slack Notification
