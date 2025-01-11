@@ -3,4 +3,5 @@ tutorial/**/bin
 tutorial/**/lib
 tutorial/**/include
 **/venv/**
+**/.venv/**
 **/key.py

@@ -7,6 +7,7 @@ on:
     paths:
       - 'sam/waf_rule/**'
       - 'sam/waf-update/**'
+      - 'sam/s3-conversion/func/**'
   workflow_dispatch:
 
 env:

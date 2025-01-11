@@ -1,0 +1,184 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Daily cost notifications to Slack
+
+Globals:
+  Function:
+    Timeout: 60
+    MemorySize: 128
+    CodeUri: function/
+    Runtime: python3.12
+    Architectures:
+        - arm64
+    LoggingConfig:
+      LogFormat: JSON
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    Description: Environment name
+  ProjectName:
+    Type: String
+    Default: event-bucket
+    Description: Project name
+
+Outputs:
+  S3ConversionFunctionName:
+    Description: "Name of the Lambda function"
+    Value: !Ref S3ConversionFunction
+
+Resources:  
+  #######################################################
+  # Lambda Function
+  #######################################################
+  S3ConversionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: s3-conversion
+      Handler: app.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          OUTPUTBUCKET: !Ref TransferBucket
+
+  #######################################################
+  # Cloudwatch Logs
+  #######################################################
+  CostNotifyLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${S3ConversionFunction}
+      RetentionInDays: 7
+
+  #######################################################
+  # IAM Role
+  #######################################################
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: cost-notify-lambda-execution-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+
+      Policies:
+        - PolicyName: logs_policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: 'arn:aws:logs:ap-northeast-1:*:log-group:*:*'
+
+        - PolicyName: ssm_policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                Resource: 'arn:aws:ssm:ap-northeast-1:*:*'
+
+        - PolicyName: s3_policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "s3:GetBucketAcl"
+                  - "s3:PutObject"
+                  - "s3:GetObject"
+                  - "s3:ListBucket"
+                Resource: "arn:aws:s3:::*"
+
+  #######################################################
+  # S3
+  #######################################################
+  SrcBucket:
+    Type: AWS::S3::Bucket
+    Properties: 
+      AccessControl: Private
+      BucketName: !Sub ${ProjectName}-src-${Environment}
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      Tags:
+        - Key: Env
+          Value: SAM
+
+  TransferBucket:
+    Type: AWS::S3::Bucket
+    Properties: 
+      AccessControl: Private
+      BucketName: !Sub ${ProjectName}-dst-${Environment}
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      Tags:
+        - Key: Env
+          Value: SAM
+
+  # CostNotifyLambdaPermission:
+  #   Type: AWS::Lambda::Permission
+  #   Properties:
+  #     FunctionName: !Ref CostNotifyFunction
+  #     Action: lambda:InvokeFunction
+  #     Principal: scheduler.amazonaws.com
+  #     SourceArn: !GetAtt CostNotifyCronEventBridge.Arn
+
+  # SchedulerExecutionRole:
+  #   Type: AWS::IAM::Role
+  #   Properties:
+  #     RoleName: cost-notify-event-schedule-role
+  #     AssumeRolePolicyDocument:
+  #       Version: '2012-10-17'
+  #       Statement:
+  #         - Effect: Allow
+  #           Principal:
+  #             Service: scheduler.amazonaws.com
+  #           Action: sts:AssumeRole
+  #     Policies:
+  #       - PolicyName: InvokeLambdaPolicy
+  #         PolicyDocument:
+  #           Version: '2012-10-17'
+  #           Statement:
+  #             - Effect: Allow
+  #               Action: 'lambda:InvokeFunction'
+  #               Resource: !GetAtt CostNotifyFunction.Arn
+
+  # CostNotifyCronEventBridge:
+  #   Type: AWS::Scheduler::Schedule
+  #   Properties:
+  #     Name: cost-notify
+  #     Description: Cron to monitor Lambda every hour
+  #     ScheduleExpression: cron(07 22 ? * MON-SUN *)
+  #     ScheduleExpressionTimezone: Asia/Tokyo
+  #     State: ENABLED
+  #     FlexibleTimeWindow:
+  #         MaximumWindowInMinutes: 15
+  #         Mode: "FLEXIBLE"
+  #     Target:
+  #       Arn: !GetAtt CostNotifyFunction.Arn
+  #       RoleArn: !GetAtt SchedulerExecutionRole.Arn
+
