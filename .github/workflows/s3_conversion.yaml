@@ -12,7 +12,6 @@ on:
 
 env:
   AWS_REGION: ap-northeast-1
-  SLACK_ICON: sam/waf_rule/SAM_acorn_1.0dd761f4fca5f2e7007a323b74631ec71b03a92d.png
   IAM_ROLE_ARN: arn:aws:iam::685339645368:role/deploy-github-actions
   SLACK_CHANNEL_NAME: lambda_notify
 
@@ -64,10 +63,9 @@ jobs:
         name: Slack Notification
         uses: rtCamp/action-slack-notify@v2.2.0
         env:
-          SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL_NAME }}
+          SLACK_CHANNEL: ${{ env.SLACK_CHANNEL_NAME }}
           SLACK_COLOR: ${{ job.status }}
           SLACK_USERNAME: SAM
           SLACK_MESSAGE: 'deploy success'
-          SLACK_ICON: ${{ env.SLACK_ICON }}
           SLACK_TITLE: SAM Result🚀
           SLACK_WEBHOOK: ${{ secrets.WEBHOOK_URL }}
