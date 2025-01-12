@@ -42,21 +42,21 @@ Resources:
       Environment:
         Variables:
           OUTPUTBUCKET: !Ref TransferBucket
-      # Layers:
-      #   - !Ref PyminiZipLayer
+      Layers:
+        - !Ref PyminiZipLayer
 
-  # PyminiZipLayer:
-  #   Type: AWS::Serverless::LayerVersion
-  #   Properties:
-  #     LayerName: pyminizip-layer
-  #     Description: pyminizip
-  #     ContentUri: 'layers/pyminizip/'
-  #     CompatibleRuntimes:
-  #       - python3.12
-  #   Metadata:
-  #     BuildMethod: python3.12
-  #     BuildProperties:
-  #         UseContainer: true
+  PyminiZipLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: pyminizip-layer
+      Description: pyminizip
+      ContentUri: 'pyminiziplayer/'
+      CompatibleRuntimes:
+        - python3.12
+    Metadata:
+      BuildMethod: python3.12
+      BuildProperties:
+          UseContainer: true
 
   #######################################################
   # Cloudwatch Logs
