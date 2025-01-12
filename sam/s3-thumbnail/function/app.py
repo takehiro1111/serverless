@@ -1,37 +1,49 @@
+"""
+処理内容
+S3バケットに画像ファイルがアップロードされるとDynamoDBにファイルのメタデータを書き込む。
+
+処理順序
+1.srcのS3バケットからファイル情報を取得
+2.DynamoDBテーブルに書き込み
+3.Slack通知
+
+参考
+https://qiita.com/yifey/items/cd97445ecd7085cea444
+https://qiita.com/ttkiida/items/6a0c8ea2570821aa7ff8
+https://qiita.com/NoriakiOshita/items/2f9e3a16110679e0efac
+"""
+
 import json
+import logging
+import os
+import tempfile
+import boto3
 
-# import requests
+# 定数
+DEFAULT_REGION='ap-northeast-1'
 
+def get_dynamodb_table():
+    dynamodb_client = boto3.resource('dynamodb',region_name=DEFAULT_REGION)
+    table_name = dynamodb_client.Table("ThumbnailMetadata").name
+    
+    return table_name
 
 def lambda_handler(event, context):
-    """Sample pure Lambda function
-
-    Parameters
-    ----------
-    event: dict, required
-        API Gateway Lambda Proxy Input Format
-
-        Event doc: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format
-
-    context: object, required
-        Lambda Context runtime methods and attributes
-
-        Context doc: https://docs.aws.amazon.com/lambda/latest/dg/python-context-object.html
-
-    Returns
-    ------
-    API Gateway Lambda Proxy Output Format: dict
-
-        Return doc: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html
     """
-
-    # try:
-    #     ip = requests.get("http://checkip.amazonaws.com/")
-    # except requests.RequestException as e:
-    #     # Send some context about this error to Lambda Logs
-    #     print(e)
-
-    #     raise e
+    
+    """
+    s3_client = boto3.client('s3')
+    # S3バケットの取得
+    response = s3_client.list_buckets(BucketRegion=DEFAULT_REGION)
+    
+    # ファイル情報の取得
+    
+    # res = s3_client.get_object(Bucket=bucket, Key=filename)
+    
+    # S3バケットのファイルが画像ファイルか精査
+    
+    # DynamoDBテーブルへのput items
+    table = get_dynamodb_table()
 
     return {
         "statusCode": 200,
@@ -40,3 +52,15 @@ def lambda_handler(event, context):
             # "location": ip.text.replace("\n", "")
         }),
     }
+
+
+# デバッグ用
+# if __name__ == "__main__":
+#     print(get_dynamodb_table())
+    
+#     s3_client = boto3.client('s3')
+#     buckets = s3_client.list_buckets()
+#     bucket_name = buckets.get('Buckets')
+#     bucket = [i.get("Name") for i in bucket_name ]
+#     print(bucket)
+

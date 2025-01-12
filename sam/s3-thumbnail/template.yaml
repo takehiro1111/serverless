@@ -23,6 +23,10 @@ Parameters:
     Type: String
     Default: event-bucket
     Description: Project name
+  DynamoDBTableName:
+    Type: String
+    Default: !Ref ThumbnailMetadataTable
+    Description: DynamoDB TableName
 
 # Outputs:
 #   S3ConversionFunctionName:
