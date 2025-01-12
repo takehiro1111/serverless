@@ -7,7 +7,7 @@ Globals:
   Function:
     Timeout: 60
     MemorySize: 128
-    CodeUri: func
+    CodeUri: function
     Runtime: python3.12
     Architectures:
         - x86_64
@@ -24,10 +24,10 @@ Parameters:
     Default: event-bucket
     Description: Project name
 
-Outputs:
-  S3ConversionFunctionName:
-    Description: "Name of the Lambda function"
-    Value: !Ref S3ConversionFunction
+# Outputs:
+#   S3ConversionFunctionName:
+#     Description: "Name of the Lambda function"
+#     Value: !Ref S3ConversionFunction
 
 Resources:  
   #######################################################
@@ -36,22 +36,22 @@ Resources:
   S3ThumbnailFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: s3-conversion
+      FunctionName: s3-thumbnail
       Handler: app.lambda_handler
       Role: !GetAtt LambdaExecutionRole.Arn
-      Environment:
-        Variables:
-          OUTPUTBUCKET: !Ref TransferBucket
+      # Environment:
+      #   Variables:
+      #     OUTPUTBUCKET: !Ref TransferBucket
       # Layers:
       #   - !Ref PyminiZipLayer
-      Events:
-        S3Event:
-          Type: S3
-          Properties:
-            Bucket: !Ref SrcBucket
-            # https://docs.aws.amazon.com/ja_jp/AmazonS3/latest/userguide/notification-how-to-event-types-and-destinations.html#supported-notification-event-types
-            Events: 
-              - s3:ObjectCreated:*
+      # Events:
+      #   S3Event:
+      #     Type: S3
+      #     Properties:
+      #       Bucket: !Ref SrcBucket
+      #       # https://docs.aws.amazon.com/ja_jp/AmazonS3/latest/userguide/notification-how-to-event-types-and-destinations.html#supported-notification-event-types
+      #       Events: 
+      #         - s3:ObjectCreated:*
 
   # PyminiZipLayer:
   #   Type: AWS::Serverless::LayerVersion
@@ -81,7 +81,7 @@ Resources:
   LambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: s3-conversion-lambda-execution-role
+      RoleName: s3-thumbnail-lambda-execution-role
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -154,8 +154,8 @@ Resources:
           AttributeType: "S"
         - AttributeName: "original_filename"
           AttributeType: "S"
-        - AttributeName: "created_at"
-          AttributeType: "S"
+        # - AttributeName: "created_at"
+        #   AttributeType: "S"
       KeySchema:
         - AttributeName: "image_id" # パーティションキー（HASH）
           KeyType: "HASH"
