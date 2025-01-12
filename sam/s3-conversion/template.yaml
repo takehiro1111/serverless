@@ -44,6 +44,14 @@ Resources:
           OUTPUTBUCKET: !Ref TransferBucket
       Layers:
         - !Ref PyminiZipLayer
+      Events:
+        S3Event:
+          Type: S3
+          Properties:
+            Bucket: !Ref SrcBucket
+            # https://docs.aws.amazon.com/ja_jp/AmazonS3/latest/userguide/notification-how-to-event-types-and-destinations.html#supported-notification-event-types
+            Events: 
+              - s3:ObjectCreated:*
 
   PyminiZipLayer:
     Type: AWS::Serverless::LayerVersion
@@ -122,7 +130,7 @@ Resources:
     Type: AWS::S3::Bucket
     Properties: 
       AccessControl: Private
-      BucketName: !Sub ${ProjectName}-src-${Environment}
+      BucketName: !Sub ${ProjectName}-src2-${Environment}
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true
