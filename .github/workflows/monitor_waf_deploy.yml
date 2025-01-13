@@ -1,18 +1,17 @@
-name: daily_monitor_waf_deploy
-
+name: WAF Rule Update
+run-name: ${{ github.workflow }} by @${{ github.actor }}
 on:
   push:
     branches:
       - 'main'
     paths:
       - 'sam/waf_rule/**'
-      - 'sam/waf-update/**'
   workflow_dispatch:
 
 env:
   AWS_REGION: ap-northeast-1
   SLACK_ICON: sam/waf_rule/SAM_acorn_1.0dd761f4fca5f2e7007a323b74631ec71b03a92d.png
-  IAM_ROLE_ARN: arn:aws:iam::421643133281:role/deploy-github-actions
+  IAM_ROLE_ARN: arn:aws:iam::650251692423:role/deploy-github-actions
   SLACK_CHANNEL_NAME: #lambda_notify
 
 permissions:
@@ -26,9 +25,10 @@ jobs:
     defaults:
       run:
         working-directory: sam/waf_rule
+    timeout-minutes: 5
     steps: # ref:https://docs.aws.amazon.com/ja_jp/serverless-application-model/latest/developerguide/deploying-using-github.html
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v3
+      - uses: actions/setup-python@v5
       - uses: aws-actions/setup-sam@v2
       - uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -37,11 +37,11 @@ jobs:
           role-session-name: GithubActions_AssumeRole_daily_monitor_waf_deploy
           #CloudTrailログ等の監査ログでどのセッションがどの操作を行ったのかを追跡するために設定。
       - run: sam build --use-container
-      - run: sam deploy --no-confirm-changeset --no-fail-on-empty-changeset 
+      - run: sam deploy --no-confirm-changeset --no-fail-on-empty-changeset
 
         name: sam update
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v3
+      - uses: actions/setup-python@v5
       - uses: aws-actions/setup-sam@v2
       - uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -50,13 +50,11 @@ jobs:
           role-session-name: GithubActions_AssumeRole_update_waf_deploy
           #CloudTrailログ等の監査ログでどのセッションがどの操作を行ったのかを追跡するために設定。
       - run: sam build --use-container
-        working-directory: sam/waf-update
-      - run: sam deploy --no-confirm-changeset --no-fail-on-empty-changeset 
-        working-directory: sam/waf-update
+      - run: sam deploy --no-confirm-changeset --no-fail-on-empty-changeset
 
       - if: always()
         name: Slack Notification
-        uses: rtCamp/action-slack-notify@v2.2.0
+        uses: rtCamp/action-slack-notify@v2.3.2
         env:
           SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL_NAME }}
           SLACK_COLOR: ${{ job.status }}
@@ -65,4 +63,3 @@ jobs:
           SLACK_ICON: ${{ env.SLACK_ICON }}
           SLACK_TITLE: SAM Result🚀
           SLACK_WEBHOOK: ${{ secrets.WEBHOOK_URL }}
-

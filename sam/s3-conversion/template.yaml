@@ -1,0 +1,163 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  S3Conversion
+
+Globals:
+  Function:
+    Timeout: 60
+    MemorySize: 128
+    CodeUri: func
+    Runtime: python3.12
+    Architectures:
+        - x86_64
+    LoggingConfig:
+      LogFormat: JSON
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    Description: Environment name
+  ProjectName:
+    Type: String
+    Default: event-bucket
+    Description: Project name
+
+Outputs:
+  S3ConversionFunctionName:
+    Description: "Name of the Lambda function"
+    Value: !Ref S3ConversionFunction
+
+Resources:
+  #######################################################
+  # Lambda Function
+  #######################################################
+  S3ConversionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: s3-conversion
+      Handler: app.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          OUTPUTBUCKET: !Ref TransferBucket
+      Layers:
+        - !Ref PyminiZipLayer
+      Events:
+        S3Event:
+          Type: S3
+          Properties:
+            Bucket: !Ref SrcBucket
+            # https://docs.aws.amazon.com/ja_jp/AmazonS3/latest/userguide/notification-how-to-event-types-and-destinations.html#supported-notification-event-types
+            Events:
+              - s3:ObjectCreated:*
+
+  PyminiZipLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: pyminizip-layer
+      Description: pyminizip
+      ContentUri: 'pyminiziplayer/'
+      CompatibleRuntimes:
+        - python3.12
+    Metadata:
+      BuildMethod: python3.12
+      BuildProperties:
+          UseContainer: true
+
+  #######################################################
+  # Cloudwatch Logs
+  #######################################################
+  S3ConversionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${S3ConversionFunction}
+      RetentionInDays: 7
+
+  #######################################################
+  # IAM Role
+  #######################################################
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: s3-conversion-lambda-execution-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+
+      Policies:
+        - PolicyName: logs_policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: 'arn:aws:logs:ap-northeast-1:*:log-group:*:*'
+
+        - PolicyName: ssm_policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                Resource: 'arn:aws:ssm:ap-northeast-1:*:*'
+
+        - PolicyName: s3_policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "s3:GetBucketAcl"
+                  - "s3:PutObject"
+                  - "s3:GetObject"
+                  - "s3:ListBucket"
+                Resource: "arn:aws:s3:::*"
+
+  #######################################################
+  # S3
+  #######################################################
+  SrcBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: Private
+      BucketName: !Sub ${ProjectName}-src-${Environment}
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      Tags:
+        - Key: Env
+          Value: SAM
+
+  TransferBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: Private
+      BucketName: !Sub ${ProjectName}-dst-${Environment}
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      Tags:
+        - Key: Env
+          Value: SAM

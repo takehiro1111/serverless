@@ -1,0 +1,71 @@
+name: s3-Conversion
+run-name: ${{ github.workflow }} by @${{ github.actor }}
+
+on:
+  push:
+    branches:
+      - 'main'
+    paths:
+      - 'sam/s3-conversion/func/**'
+      - '.github/workflows/s3_conversion.yaml'
+  workflow_dispatch:
+
+env:
+  AWS_REGION: ap-northeast-1
+  IAM_ROLE_ARN: arn:aws:iam::685339645368:role/deploy-github-actions
+  SLACK_CHANNEL_NAME: lambda_notify
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  sam:
+    name: sam deploy
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sam/s3-conversion
+    timeout-minutes: 60
+    steps: # ref:https://docs.aws.amazon.com/ja_jp/serverless-application-model/latest/developerguide/deploying-using-github.html
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+
+      # SAMビルドのキャッシュ
+      - uses: actions/cache@v4
+        with:
+          path: .aws-sam/build
+          key: ${{ runner.os }}-sam-build-${{ hashFiles('**/*.py') }}
+
+      - uses: aws-actions/setup-sam@v2
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{env.AWS_REGION}}
+          role-to-assume: ${{ env.IAM_ROLE_ARN }}
+          role-session-name: ${{ github.workflow }}
+          #CloudTrailログ等の監査ログでどのセッションがどの操作を行ったのかを追跡するために設定。
+
+      - name: SAM Build
+        run: sam build --use-container
+        if: success()
+      - name: SAM Deploy
+        run: sam deploy --no-confirm-changeset --no-fail-on-empty-changeset
+        if: success()
+
+      - if: always()
+        name: Slack Notification
+        uses: rtCamp/action-slack-notify@v2.3.2
+        env:
+          SLACK_CHANNEL: ${{ env.SLACK_CHANNEL_NAME }}
+          SLACK_COLOR: ${{ job.status }}
+          SLACK_USERNAME: SAM
+          SLACK_MESSAGE: 'deploy success'
+          SLACK_TITLE: SAM Result🚀
+          SLACK_WEBHOOK: ${{ secrets.WEBHOOK_URL }}

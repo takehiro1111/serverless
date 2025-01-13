@@ -3,4 +3,8 @@ tutorial/**/bin
 tutorial/**/lib
 tutorial/**/include
 **/venv/**
+**/.venv/**
 **/key.py
+**/.vscode/**
+**/.DS_Store
+**/.DS_Store/**

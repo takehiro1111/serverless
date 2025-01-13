@@ -15,7 +15,7 @@ now = datetime.datetime.now(JST)
 # # 現在の日時をJSTで取得
 now_jst = datetime.datetime.now(JST)
 print(now_jst)
-print(now_jst.strftime('%Y/%m/%d-%H:%M:%S%X')) 
+print(now_jst.strftime("%Y/%m/%d-%H:%M:%S%X"))
 
 TZ = zoneinfo.ZoneInfo("Asia/Tokyo")
 # date_time = datetime.datetime(year=2024, month=12, day=21, hour=9,minute=3,second=5,microsecond=10,tzinfo=TZ)

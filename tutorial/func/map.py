@@ -5,11 +5,11 @@ l = [-2, -1, 0]
 
 # print(type(map(abs, l)))
 
-for i in map(abs,l):
-  if i > -1:
-    print(i)
+for i in map(abs, l):
+    if i > -1:
+        print(i)
 
-l_s = ['apple', 'orange', 'strawberry']
+l_s = ["apple", "orange", "strawberry"]
 print(list(map(len, l_s)))
 
 

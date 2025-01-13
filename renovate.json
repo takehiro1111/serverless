@@ -1,6 +1,76 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:recommended"
-  ]
+    "config:base",
+    "config:best-practices",
+    ":label(renovate)",
+    ":timezone(Asia/Tokyo)",
+    "github>aquaproj/aqua-renovate-config#2.6.0"
+  ],
+  "configMigration": true,
+  "prHourlyLimit": 0,
+  "prConcurrentLimit": 0,
+  "assignAutomerge": false,
+  "autoApprove": true,
+  "automergeType": "pr",
+  "automergeStrategy": "auto",
+  "rebaseWhen": "auto",
+  "dependencyDashboard": true,
+  "ignoreTests": true,
+  "ignoreReviewers": [
+    "takehiro1111",
+    "tatsuya068"
+  ],
+  "reviewers": [
+    "Renovate Approve[bot]",
+    "Renovate Approve 2[bot]"
+  ],
+  "packageRules": [
+    {
+      "matchManagers": [
+        "pip-requirements",
+        "poetry",
+        "setup-cfg"
+      ],
+      "matchDepTypes": [
+        "dependencies",
+        "dev-dependencies"
+      ],
+      "groupName": "python dependencies"
+    },
+    {
+      "matchPackagePatterns": [
+        "^pytest"
+      ],
+      "groupName": "pytest packages"
+    }
+  ],
+  "pip_requirements": {
+    "fileMatch": [
+      "^requirements.*\\.txt$",
+      "^requirements/.*\\.txt$"
+    ]
+  },
+  "poetry": {
+    "fileMatch": [
+      "^pyproject\\.toml$"
+    ]
+  },
+  "schedule": [
+    "every weekend"
+  ],
+  "labels": [
+    "dependencies"
+  ],
+  "rangeStrategy": "pin",
+  "automerge": false,
+  "major": {
+    "automerge": false
+  },
+  "minor": {
+    "automerge": true
+  },
+  "patch": {
+    "automerge": true
+  }
 }
