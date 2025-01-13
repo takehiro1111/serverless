@@ -1,4 +1,4 @@
-class MyClass(object):
+class MyClass:
     CLASS_PARAM = 100
 
     def __init__(self, value):
@@ -14,6 +14,7 @@ class MyClass(object):
     def class_method(cls, multiplier):
         # クラスオブジェクト (cls) を利用
         return cls(cls.CLASS_PARAM * multiplier)  # clsを利用して動的に呼び出す
+
 
 # インスタンスを生成
 general = MyClass(3)

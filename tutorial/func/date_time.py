@@ -1,6 +1,5 @@
-
+from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
-from datetime import datetime,timedelta,timezone
 
 date = datetime.now().date()
 print(date)
@@ -23,7 +22,7 @@ zi_name = zi.tzname()
 print(type(zi_name))
 
 
-td_1w = timedelta(days = 2,hours = 3,minutes = 4)
+td_1w = timedelta(days=2, hours=3, minutes=4)
 print(td_1w)
 
 now = datetime.now(ZoneInfo("Asia/Tokyo"))

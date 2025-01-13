@@ -85,7 +85,7 @@ Resources:
                   - wafv2:UpdateWebACL
                   - wafv2:ListWebACLs
                   - wafv2:GetWebACL
-                Resource: 
+                Resource:
                   - arn:aws:wafv2:us-east-1:*:global/webacl/*/*
 
   # DeleteWafRuleEventRule:
@@ -150,4 +150,3 @@ Resources:
       Name: /common/waf-update/SLACK_WEBHOOK
       Type: String # CloudFromationではSecureStringがサポートされていない。
       Value: '画面上で設定する'
-

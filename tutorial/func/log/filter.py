@@ -1,5 +1,6 @@
 import logging
 
+
 class LogFilter(logging.Filter):
     def __init__(self, words=None):
         super().__init__()

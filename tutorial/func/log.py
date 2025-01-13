@@ -66,12 +66,14 @@ logger.addHandler(stream_handler)
 formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 stream_handler.setFormatter(formatter)
 
+
 # ログフィルターの内容を定義
 class LogFilter(logging.Filter):
-  def filter(self,ignore):
-    word = ignore.getMessage()
-    return 'password' not in word
-  
+    def filter(self, ignore):
+        word = ignore.getMessage()
+        return "password" not in word
+
+
 # ログフィルターを設定
 logger.addFilter(LogFilter())
 

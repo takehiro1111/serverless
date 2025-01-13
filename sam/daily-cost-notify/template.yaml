@@ -14,7 +14,7 @@ Globals:
     LoggingConfig:
       LogFormat: JSON
 
-Resources:  
+Resources:
   CostNotifyFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -83,7 +83,7 @@ Resources:
         #       - Effect: Allow
         #         Action:
         #           - sts:*
-        #         Resource: 
+        #         Resource:
         #           - arn:aws:iam::685339645368:role/monitor-waf-rule
 
   SchedulerExecutionRole:
