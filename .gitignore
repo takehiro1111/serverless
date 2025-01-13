@@ -6,3 +6,4 @@ tutorial/**/include
 **/.venv/**
 **/key.py
 **/.vscode/**
+**/.DS_Store/**
