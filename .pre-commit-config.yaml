@@ -1,6 +1,6 @@
 # reference: https://developer.lsst.io/python/formatting.html
 
-# default_stages: [pre-commit]
+default_stages: [pre-commit]
 
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
