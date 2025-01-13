@@ -25,7 +25,7 @@ repos:
         # https://pre-commit.com/#top_level-default_language_version
         language_version: python3.12
 
-# Pythonのimport文を整理
+# import文を整理
   - repo: https://github.com/pycqa/isort
     rev: 5.13.2
     hooks:
@@ -33,7 +33,7 @@ repos:
         name: isort (python)
         args: ["--profile", "black"]
 
-# 型チェック
+# pep8に準拠していないcodeやunused codeを検出
   - repo: https://github.com/PyCQA/flake8
     rev: 7.1.1
     hooks:
@@ -44,13 +44,14 @@ repos:
           - flake8-docstrings  # docstringのチェック
           - flake8-simplify  # コードの簡素化提案
 
-# 古いPython構文を現代的な構文に自動変換
+# 型チェック
   - repo: https://github.com/python/mypy
     rev: 1.14.1
     hooks:
       - id: mypy
         additional_dependencies: [types-all]
 
+# 古いPython構文を現代的な構文に自動変換
   - repo: https://github.com/asottile/pyupgrade
     rev: v3.15.1
     hooks:
