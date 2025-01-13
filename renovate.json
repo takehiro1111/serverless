@@ -57,7 +57,7 @@
     ]
   },
   "schedule": [
-    "every weekend"
+    "* 0-9 * * *"
   ],
   "labels": [
     "dependencies"
