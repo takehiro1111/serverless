@@ -1,0 +1,65 @@
+# reference: https://developer.lsst.io/python/formatting.html
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-yaml
+        args:
+          - "--unsafe"
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      # - id: debug-statements  # pdb, print文などのデバッグコードを検出
+      # - id: check-added-large-files  # 大きなファイルのコミットを防止
+      - id: check-toml  # TOMLファイルの構文チェック
+      - id: check-json  # JSONファイルの構文チェック
+
+# フォーマッター
+  - repo: https://github.com/psf/black-pre-commit-mirror
+    rev: 24.10.0
+    hooks:
+      - id: black
+        # It is recommended to specify the latest version of Python
+        # supported by your project here, or alternatively use
+        # pre-commit's default_language_version, see
+        # https://pre-commit.com/#top_level-default_language_version
+        language_version: python3.12
+
+# Pythonのimport文を整理
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        name: isort (python)
+        args: ["--profile", "black"]
+
+# 型チェック
+  - repo: https://github.com/PyCQA/flake8
+    rev: 7.1.1
+    hooks:
+      - id: flake8
+        additional_dependencies:
+          - flake8-bugbear  # バグの可能性が高いパターンを検出
+          - flake8-comprehensions  # リスト内包表記の改善提案
+          - flake8-docstrings  # docstringのチェック
+          - flake8-simplify  # コードの簡素化提案
+
+# 古いPython構文を現代的な構文に自動変換
+  - repo: https://github.com/python/mypy
+    rev: 1.14.1
+    hooks:
+      - id: mypy
+        additional_dependencies: [types-all]
+
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v3.15.1
+    hooks:
+      - id: pyupgrade
+        args: [--py312-plus]  # Python 3.12の新機能を活用
+
+# セキュリティの脆弱性をスキャン
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.8
+    hooks:
+      - id: bandit
+        args: ["-c", "py_project.toml"]  # セキュリティチェック
