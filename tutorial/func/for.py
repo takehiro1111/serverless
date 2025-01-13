@@ -1,5 +1,5 @@
-ages = [10,20,30,40]
-places = ["東京","広島","大阪","京都"]
+ages = [10, 20, 30, 40]
+places = ["東京", "広島", "大阪", "京都"]
 
 # for age,place in zip(ages,places):
 #   if age >= 10 and place == places[0]:
@@ -20,9 +20,9 @@ places = ["東京","広島","大阪","京都"]
 # print(f'私が住んだことのある場所は、{inclusive_notation}です。')
 
 for age in ages:
-  if age < 10:
-    continue
-  elif age >= 10 and age <= 30:
-    print(age)
-  else: 
-    break
+    if age < 10:
+        continue
+    elif age >= 10 and age <= 30:
+        print(age)
+    else:
+        break

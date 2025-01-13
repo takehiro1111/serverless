@@ -1,7 +1,8 @@
-import boto3
 import logging
 import time
 from datetime import datetime
+
+import boto3
 
 # ロガーを作成
 # ロガーを作成
@@ -16,6 +17,7 @@ stream_handler.setFormatter(formatter)
 
 # ロガーにハンドラーを追加
 logger.addHandler(stream_handler)
+
 
 def assume_role(*args, **kwargs):
     """
@@ -44,45 +46,46 @@ def assume_role(*args, **kwargs):
 def get_s3_object(*args, **kwargs):
     """
     S3からオブジェクトを取得し、実行時間とレスポンスを表示する
-    
+
     Args:
         bucket_name (str): S3バケット名
         object_key (str): オブジェクトのキー
-        
+
     Returns:
         dict: get_objectのレスポンス
     """
     try:
-      s3_client = assume_role()
+        s3_client = assume_role()
 
-      start_time = time.time()
+        start_time = time.time()
 
-      response = s3_client.get_object(
-          Bucket="hoge",
-          Key="fuga",
-      )
+        response = s3_client.get_object(
+            Bucket="hoge",
+            Key="fuga",
+        )
 
-      # 終了時間を記録と実行時間の計算
-      end_time = time.time()
-      execution_time = end_time - start_time
+        # 終了時間を記録と実行時間の計算
+        end_time = time.time()
+        execution_time = end_time - start_time
 
-      # レスポンスの内容を表示
-      logger.info(f"Response metadata: {response['ResponseMetadata']}")
-      logger.info(f"Content length: {response['ContentLength']} bytes")
-      logger.info(f"Last modified: {response['LastModified']}")
-      
-      # 実行時間の表示
-      logger.info(f"Execution time: {execution_time:.3f} sec")
+        # レスポンスの内容を表示
+        logger.info(f"Response metadata: {response['ResponseMetadata']}")
+        logger.info(f"Content length: {response['ContentLength']} bytes")
+        logger.info(f"Last modified: {response['LastModified']}")
 
-      return response["Body"].read()
+        # 実行時間の表示
+        logger.info(f"Execution time: {execution_time:.3f} sec")
+
+        return response["Body"].read()
 
     except Exception as e:
-      logger.error(f"Error: {e}")
-      raise
+        logger.error(f"Error: {e}")
+        raise
+
 
 # このファイル名での実行の場合の処理
 if __name__ == "__main__":
-  BUCKET_NAME = "hoge"
-  OBJECT_KEY = "fuga"
+    BUCKET_NAME = "hoge"
+    OBJECT_KEY = "fuga"
 
-  response = get_s3_object(BUCKET_NAME, OBJECT_KEY)
+    response = get_s3_object(BUCKET_NAME, OBJECT_KEY)

@@ -37,7 +37,7 @@ jobs:
           role-session-name: GithubActions_AssumeRole_daily_monitor_waf_deploy
           #CloudTrailログ等の監査ログでどのセッションがどの操作を行ったのかを追跡するために設定。
       - run: sam build --use-container
-      - run: sam deploy --no-confirm-changeset --no-fail-on-empty-changeset 
+      - run: sam deploy --no-confirm-changeset --no-fail-on-empty-changeset
 
         name: sam update
       - uses: actions/checkout@v4
@@ -50,7 +50,7 @@ jobs:
           role-session-name: GithubActions_AssumeRole_update_waf_deploy
           #CloudTrailログ等の監査ログでどのセッションがどの操作を行ったのかを追跡するために設定。
       - run: sam build --use-container
-      - run: sam deploy --no-confirm-changeset --no-fail-on-empty-changeset 
+      - run: sam deploy --no-confirm-changeset --no-fail-on-empty-changeset
 
       - if: always()
         name: Slack Notification
@@ -63,4 +63,3 @@ jobs:
           SLACK_ICON: ${{ env.SLACK_ICON }}
           SLACK_TITLE: SAM Result🚀
           SLACK_WEBHOOK: ${{ secrets.WEBHOOK_URL }}
-

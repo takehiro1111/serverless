@@ -1,26 +1,20 @@
-import boto3
 import json
 
-dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table('tasks')
+import boto3
 
-def lambda_handler(event,context):
-  try:
-    response = table.scan(Limit = 3)
-    items = response.get('Items',[])
+dynamodb = boto3.resource("dynamodb")
+table = dynamodb.Table("tasks")
 
-  except Exception as e:
+
+def lambda_handler(event, context):
+    try:
+        response = table.scan(Limit=3)
+        items = response.get("Items", [])
+
+    except Exception as e:
+        return {"statusCode": 500, "body": json.dumps(f"Error_scan:{str(e)}")}
+
     return {
-      'statusCode':500,
-      'body':json.dumps(f'Error_scan:{str(e)}')
+        "statusCode": 200,
+        "body": json.dumps({"message": f"Task Get Successfully!", "tasks": items}),
     }
-  
-  return {
-    'statusCode':200,
-    'body':json.dumps({
-      'message':f'Task Get Successfully!',
-      'tasks': items
-    })
-  }
-
-

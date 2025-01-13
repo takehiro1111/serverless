@@ -27,7 +27,7 @@ Resources:
   #   Properties:
   #     Handler: waf_recreate.lambda_handler
   #     Role: !GetAtt LambdaExecutionRole.Arn
-  
+
   MonitorWAFRuleFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -45,7 +45,7 @@ Resources:
   #   Type: AWS::Serverless::Function
   #   Properties:
   #     Handler: test.assume_role
-  #     Role: !GetAtt LambdaExecutionRole.Arn 
+  #     Role: !GetAtt LambdaExecutionRole.Arn
   #     CodeUri: .
 
   LambdaExecutionRole:
@@ -90,7 +90,7 @@ Resources:
                   # - wafv2:UpdateWebACL
                   - wafv2:ListWebACLs
                   - wafv2:GetWebACL
-                Resource: 
+                Resource:
                   - arn:aws:wafv2:us-east-1:*:global/webacl/*/*
 
         - PolicyName: sts_policy
@@ -100,7 +100,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - sts:*
-                Resource: 
+                Resource:
                   - arn:aws:iam::685339645368:role/monitor-waf-rule
 
   SchedulerExecutionRole:

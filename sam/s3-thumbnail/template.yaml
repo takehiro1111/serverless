@@ -33,7 +33,7 @@ Parameters:
 #     Description: "Name of the Lambda function"
 #     Value: !Ref S3ConversionFunction
 
-Resources:  
+Resources:
   #######################################################
   # Lambda Function
   #######################################################
@@ -54,7 +54,7 @@ Resources:
       #     Properties:
       #       Bucket: !Ref SrcBucket
       #       # https://docs.aws.amazon.com/ja_jp/AmazonS3/latest/userguide/notification-how-to-event-types-and-destinations.html#supported-notification-event-types
-      #       Events: 
+      #       Events:
       #         - s3:ObjectCreated:*
 
   # PyminiZipLayer:

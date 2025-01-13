@@ -32,26 +32,29 @@
 # child_hero.hello()
 # child_hero.showCharacterInfo2()
 
-class Animal(object):
+
+class Animal:
     def __init__(self, name):
         self.name = name
-        
+
     def __del__(self):
-      print('デストラクタ')
-      
+        print("デストラクタ")
+
     def name1(self):
-      print(f'私の名前は{self.name}')
+        print(f"私の名前は{self.name}")
+
 
 class Dog(Animal):
     def __init__(self, name, breed):
         super().__init__(name)  # 親クラスのコンストラクタを呼び出す
         self.breed = breed
-    
+
     def show_breed(self):
-      print(self.breed)
+        print(self.breed)
+
 
 # 動作確認
-dog = Dog("tanaka","tiwawa")
+dog = Dog("tanaka", "tiwawa")
 
 dog.name1()
 dog.show_breed()

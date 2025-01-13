@@ -1,9 +1,10 @@
-class Person(object):
-  def __init__(self):
-    self.t = 30
+class Person:
+    def __init__(self):
+        self.t = 30
 
-  @staticmethod
-  def birthday(year):
-    print('私の誕生日は{}です。'.format(year))
+    @staticmethod
+    def birthday(year):
+        print(f"私の誕生日は{year}です。")
 
-Person.birthday('3月')
+
+Person.birthday("3月")
