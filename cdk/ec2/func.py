@@ -23,7 +23,6 @@ def handler(event,context):
 
 
 class FunctionStack(cdk.Stack):
-
     def __init__(self, scope: cdk.App, id: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 

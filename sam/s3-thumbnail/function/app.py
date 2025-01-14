@@ -1,68 +1,102 @@
-"""
-処理内容
-S3バケットに画像ファイルがアップロードされるとDynamoDBにファイルのメタデータを書き込む。
-
-処理順序
-1.srcのS3バケットからファイル情報を取得
-2.DynamoDBテーブルに書き込み
-3.Slack通知
-
-参考
-https://qiita.com/yifey/items/cd97445ecd7085cea444
-https://qiita.com/ttkiida/items/6a0c8ea2570821aa7ff8
-https://qiita.com/NoriakiOshita/items/2f9e3a16110679e0efac
-"""
+"""S3に画像ファイルがアップロードされるとDynamoDBにメタデータを保存しSlack通知するモジュール."""
 
 import json
-import logging
 import os
-import tempfile
+import uuid
+from typing import Any
 
 import boto3
-
-# 定数
-DEFAULT_REGION = "ap-northeast-1"
-
-
-def get_dynamodb_table():
-    dynamodb_client = boto3.resource("dynamodb", region_name=DEFAULT_REGION)
-    table_name = dynamodb_client.Table("ThumbnailMetadata").name
-
-    return table_name
+from botocore.exceptions import ClientError
+from config import DEFAULT_REGION, DYNAMODB_TABLE, timestamp
+from logger import logger
+from slack import send_slack_notification
 
 
-def lambda_handler(event, context):
-    """ """
-    s3_client = boto3.client("s3")
-    # S3バケットの取得
-    response = s3_client.list_buckets(BucketRegion=DEFAULT_REGION)
+def dynamodb_put_item(bucket: str, obj: str) -> None:
+    """Put an item into the DynamoDB table.
 
-    # ファイル情報の取得
+    Args:
+        bucket (str): event-bucket-thumbnail-dev
+        obj    (str): Files added to an S3 bucket as events
 
-    # res = s3_client.get_object(Bucket=bucket, Key=filename)
+    Raises:
+        botocore.exceptions.ClientError: If writing to DynamoDB fails
+        ResourceNotFoundException: DynamoDB table not found
 
-    # S3バケットのファイルが画像ファイルか精査
+    Note:
+        - image_id: UUIDv4
+        - created_at: timestamp
+    """
+    try:
+        dynamodb = boto3.resource("dynamodb", region_name=DEFAULT_REGION)
+        table = dynamodb.Table(DYNAMODB_TABLE)
 
-    # DynamoDBテーブルへのput items
-    table = get_dynamodb_table()
+        item_id = str(uuid.uuid4())
+        item = {
+            "image_id": item_id,
+            "bucket": bucket,
+            "original_filename": obj,
+            "created_at": timestamp,
+        }
+        table.put_item(Item=item)
 
-    return {
-        "statusCode": 200,
-        "body": json.dumps(
-            {
-                "message": "hello world",
-                # "location": ip.text.replace("\n", "")
-            }
-        ),
-    }
+    except ClientError as e:
+        if e.response["Error"]["Code"] == "ResourceNotFoundException":
+            logger.error("Table Not Found")
+            raise
+        else:
+            logger.error(f"An unexpected error occurred: {e}")
+            raise
 
 
-# デバッグ用
-# if __name__ == "__main__":
-#     print(get_dynamodb_table())
+def is_valid_extensions(obj: str) -> bool:
+    """Determine if the file is an image.
 
-#     s3_client = boto3.client('s3')
-#     buckets = s3_client.list_buckets()
-#     bucket_name = buckets.get('Buckets')
-#     bucket = [i.get("Name") for i in bucket_name ]
-#     print(bucket)
+    Args:
+        obj (str): Files added to an S3 bucket as events
+
+    Returns:
+        bool: Returns true if the file extension is an image file.
+    """
+    is_valid_extensions = {"png", "jpg", "jpeg"}
+    ext = os.path.splitext(obj)[1][1:]
+
+    return ext in is_valid_extensions
+
+
+def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
+    """Put the metadata into DynamoDB and notify Slack.
+
+    Args:
+        event (Dict[str, Any]): S3 Event Metadata
+        context (Any): Lambda Execution Context
+
+    Returns:
+        Dict[str, Any]: If the operation is successful, status code 200 is returned.
+
+    Raises:
+        Exception: Catching all errors
+    """
+    try:
+        for record in event["Records"]:
+            bucket_name = record["s3"]["bucket"]["name"]
+            obj_name = record["s3"]["object"]["key"]
+
+            # S3バケットのファイルが画像ファイル出ない場合は処理しない。
+            if not is_valid_extensions(obj_name):
+                break
+
+            # DynamoDBへメタデータをput
+            dynamodb_put_item(bucket_name, obj_name)
+
+            # DynamoDBに格納できたらSlack通知
+            send_slack_notification(obj_name)
+
+        return {
+            "statusCode": 200,
+            "body": json.dumps({"message": "success lambda_handler"}),
+        }
+
+    except Exception as e:
+        logger.error(f"Error lambda_handler: {e}")
+        raise

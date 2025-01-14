@@ -92,8 +92,8 @@ def lambda_handler(event, context):
 
         # 圧縮ファイルの作成
         pyminizip.compress(
-            src_file, None, zip_path, "123", int(1)  # 圧縮率：0～9 (0は無圧縮)
-        )
+            src_file, None, zip_path, "123", int(1)
+        )  # 圧縮率：0～9 (0は無圧縮)
 
         # 転送先のバケットへ書き込み。
         # 環境変数からバケット名を取得
