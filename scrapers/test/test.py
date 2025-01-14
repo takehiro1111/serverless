@@ -6,7 +6,7 @@ response = requests.get(url)
 html = response.text
 # print(response.text)
 
-soup = BeautifulSoup(html,"html.parser")
+soup = BeautifulSoup(html, "html.parser")
 title = soup.find("title").text
 print(title)
 
@@ -19,5 +19,5 @@ print(title)
 # h2_tags = soup.find_all("h1")
 # # print(h2_tag[1])
 
-# h2_all = [i for i in h2_tags] 
+# h2_all = [i for i in h2_tags]
 # print(h2_all)
