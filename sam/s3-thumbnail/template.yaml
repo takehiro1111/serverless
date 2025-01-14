@@ -23,10 +23,6 @@ Parameters:
     Type: String
     Default: event-bucket
     Description: Project name
-  DynamoDBTableName:
-    Type: String
-    Default: !Ref ThumbnailMetadataTable
-    Description: DynamoDB TableName
 
 # Outputs:
 #   S3ConversionFunctionName:
@@ -43,19 +39,21 @@ Resources:
       FunctionName: s3-thumbnail
       Handler: app.lambda_handler
       Role: !GetAtt LambdaExecutionRole.Arn
-      # Environment:
-      #   Variables:
-      #     OUTPUTBUCKET: !Ref TransferBucket
+      Environment:
+        Variables:
+          DEFAULT_REGION: !Ref AWS::Region
+          DYNAMODB_TABLE_NAME: !Ref ThumbnailMetadataTable
+          SLACK_WEBHOOK_URL: !Ref SlackWebhookParameter
       # Layers:
       #   - !Ref PyminiZipLayer
-      # Events:
-      #   S3Event:
-      #     Type: S3
-      #     Properties:
-      #       Bucket: !Ref SrcBucket
-      #       # https://docs.aws.amazon.com/ja_jp/AmazonS3/latest/userguide/notification-how-to-event-types-and-destinations.html#supported-notification-event-types
-      #       Events:
-      #         - s3:ObjectCreated:*
+      Events:
+        S3Event:
+          Type: S3
+          Properties:
+            Bucket: !Ref ThumbnaiSrcBucket
+            # https://docs.aws.amazon.com/ja_jp/AmazonS3/latest/userguide/notification-how-to-event-types-and-destinations.html#supported-notification-event-types
+            Events:
+              - s3:ObjectCreated:*
 
   # PyminiZipLayer:
   #   Type: AWS::Serverless::LayerVersion
@@ -158,8 +156,6 @@ Resources:
           AttributeType: "S"
         - AttributeName: "original_filename"
           AttributeType: "S"
-        # - AttributeName: "created_at"
-        #   AttributeType: "S"
       KeySchema:
         - AttributeName: "image_id" # パーティションキー（HASH）
           KeyType: "HASH"
@@ -168,3 +164,35 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: "3"
         WriteCapacityUnits: "3"
+
+  #######################################################
+  # S3
+  #######################################################
+  ThumbnaiSrcBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: Private
+      BucketName: !Sub ${ProjectName}-thumbnail-${Environment}
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      Tags:
+        - Key: Env
+          Value: SAM
+
+  #######################################################
+  # SSM ParameterStore
+  #######################################################
+  SlackWebhookParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /master/lambda/SLACK_WEBHOOK_URL
+      Type: String
+      Description: SSM Parameter for Slack Notification
+      Value: '画面上で設定する'
