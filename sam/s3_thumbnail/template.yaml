@@ -41,7 +41,7 @@ Resources:
       Role: !GetAtt LambdaExecutionRole.Arn
       Environment:
         Variables:
-          DEFAULT_REGION: !Ref AWS::Region
+          # DEFAULT_REGION: !Ref AWS::Region // .envで定義するため。
           DYNAMODB_TABLE_NAME: !Ref ThumbnailMetadataTable
           SLACK_WEBHOOK_URL: !Ref SlackWebhookParameter
       # Layers:

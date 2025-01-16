@@ -1,14 +1,16 @@
 """SSMパラメータストアからSlackのWebhookURLを取得し、Slack通知するモジュール."""
 
 import json
+from typing import Any
 
 import boto3
 import requests
-from config import DEFAULT_REGION, SLACK_WEBHOOK_URL
+from botocore.exceptions import ClientError
 from logger import logger
+from setting import DEFAULT_REGION_NAME, SLACK_WEBHOOK_URL
 
 
-def get_ssm_parameter() -> str:
+def get_slack_webhook_url_from_ssm() -> Any:
     """Get the SSM parameter store that stores the Slack Webhook URL.
 
     Returns:
@@ -19,20 +21,20 @@ def get_ssm_parameter() -> str:
         Exception: Catching other errors
     """
     try:
-        ssm = boto3.client("ssm", DEFAULT_REGION)
+        ssm = boto3.client("ssm", DEFAULT_REGION_NAME)
         response = ssm.get_parameter(Name=SLACK_WEBHOOK_URL, WithDecryption=True)
+
         return response["Parameter"]["Value"]
 
-    except ssm.exceptions.ParameterNotFound:
-        logger.error("Value not found.")
-        raise
+    except ClientError as e:
+        if e.response["Error"]["Code"] == "ParameterNotFound":
+            logger.error(f"SSM parameter Not Found {SLACK_WEBHOOK_URL}")
+        else:
+            logger.error(f"An unexpected error occurred:{e}")
+            raise
 
-    except Exception as e:
-        logger.error(f"Failed to get SSM parameter: {e}")
-        raise
 
-
-def send_slack_notification(file: str) -> None:
+def send_slack_notification(file: str) -> Any:
     """Send a request to Slack using the Post method.
 
     Args:
@@ -42,7 +44,7 @@ def send_slack_notification(file: str) -> None:
         None: Returns True if the request is successful.
     """
     try:
-        webhook_url = get_ssm_parameter()
+        webhook_url = get_slack_webhook_url_from_ssm()
 
         # Slackに送信するメッセージ
         message = {"text": f"新しく{file}が追加されました。"}
@@ -65,9 +67,10 @@ def send_slack_notification(file: str) -> None:
         raise
 
     except requests.exceptions.HTTPError as e:
-        logger.error(f"An HTTP error occurred: {e}")
+        logger.error(f"Status Code {e.response.status_code}")
+        logger.error(f"Response {e.response.text}")
         raise
 
     except requests.exceptions.RequestException as e:
-        logger.error(f"The request failed:{e}")
+        logger.error(f"An unexpected error occurred:{e}")
         raise
