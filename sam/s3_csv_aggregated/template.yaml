@@ -128,7 +128,7 @@ Resources:
             Version: '2012-10-17'
             Statement:
               - Effect: Allow
-                Action: 
+                Action:
                   - sns:Publish
                 Resource: !Ref GmailAddressSNS
 
@@ -210,7 +210,6 @@ Resources:
     Type: AWS::SNS::Topic
     Properties:
       TopicName: Gmail
-      Subscription: 
-        - Endpoint: !Sub "{{resolve:ssm:/master/lambda/GMAILADDRESS}}" 
+      Subscription:
+        - Endpoint: !Sub "{{resolve:ssm:/master/lambda/GMAILADDRESS}}"
           Protocol: email
-      
