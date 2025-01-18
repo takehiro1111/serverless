@@ -2,7 +2,7 @@ import uuid
 
 import boto3
 from botocore.exceptions import ClientError
-from setting import DEFAULT_REGION_NAME, DYNAMODB_TABLE, date, datetime ,logger
+from setting import DEFAULT_REGION_NAME, DYNAMODB_TABLE, date, datetime, logger
 
 
 # DynamoDBへput
@@ -16,8 +16,7 @@ def dynamodb_put_item(bucket, src_obj, dst_obj):
             date_str = date.isoformat()
         else:
             date_str = date
-            
-            
+
         item = {
             "id": item_id,
             "date": date_str,
@@ -31,13 +30,14 @@ def dynamodb_put_item(bucket, src_obj, dst_obj):
         return response
 
     except ClientError as e:
-        error_code = e.response['Error']['Code']
-        if error_code == 'ResourceNotFoundException':
+        error_code = e.response["Error"]["Code"]
+        if error_code == "ResourceNotFoundException":
             logger.error(f"Table {DYNAMODB_TABLE} not found")
         else:
-            logger.error(f"DynamoDB put_item error: {error_code} - {e.response['Error']['Message']}")
+            logger.error(
+                f"DynamoDB put_item error: {error_code} - {e.response['Error']['Message']}"
+            )
         raise
-
 
     except ClientError as e:
         logger.error(f"dynamodb_put_item: {e}")

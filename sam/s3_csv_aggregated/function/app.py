@@ -47,7 +47,7 @@ def lambda_handler(event, context):
         # SNS Publish
         #######################################################
         # SNSをpublishしてメールアドレスにファイルが更新されたことを通知。
-        publish_sns(bucket_name,destination_key)
+        publish_sns(bucket_name, destination_key)
 
         return {
             "statusCode": 200,

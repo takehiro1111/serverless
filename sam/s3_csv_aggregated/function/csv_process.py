@@ -9,6 +9,7 @@ from setting import DEFAULT_REGION_NAME, logger
 s3 = boto3.resource("s3", region_name=DEFAULT_REGION_NAME)
 s3_client = boto3.client("s3", region_name=DEFAULT_REGION_NAME)
 
+
 def get_s3file(bucket_name, key):
     """S3からファイルを読み込む"""
     try:
@@ -16,7 +17,7 @@ def get_s3file(bucket_name, key):
         try:
             s3_client.head_object(Bucket=bucket_name, Key="test.csv")
         except ClientError as e:
-            if e.response['Error']['Code'] == '404':
+            if e.response["Error"]["Code"] == "404":
                 raise FileNotFoundError(
                     f"File not found in S3: bucket={bucket_name}, key={key}"
                 )
@@ -39,7 +40,7 @@ def process_data(file_object):
             lambda: defaultdict(lambda: {"total_amount": 0, "transaction_count": 0})
         )
         reader = csv.DictReader(file_object)
-        
+
         # ヘッダーの検証
         required_fields = {"date", "category", "amount", "product_name"}
         if not set(reader.fieldnames) >= required_fields:
@@ -52,12 +53,14 @@ def process_data(file_object):
             try:
                 date = row["date"].strip()
                 category = row["category"].strip()
-                
+
                 # 金額を数値に変換
                 try:
                     amount = int(row["amount"])
                 except ValueError:
-                    logger.error(f"Row {row_number}: Invalid amount format: {row['amount']}")
+                    logger.error(
+                        f"Row {row_number}: Invalid amount format: {row['amount']}"
+                    )
                     continue
 
                 # date と category でグループ化して集計
@@ -91,17 +94,18 @@ def write_to_s3(bucket_name, key, sales_summary):
         # 日付とカテゴリでソートして結果を書き込む
         for date in sorted(sales_summary.keys()):
             for category in sorted(sales_summary[date].keys()):
-                writer.writerow([
-                    date,
-                    category,
-                    sales_summary[date][category]["total_amount"],
-                    sales_summary[date][category]["transaction_count"]
-                ])
+                writer.writerow(
+                    [
+                        date,
+                        category,
+                        sales_summary[date][category]["total_amount"],
+                        sales_summary[date][category]["transaction_count"],
+                    ]
+                )
 
         # S3にアップロード
         s3.Object(bucket_name, key).put(
-            Body=output.getvalue().encode("utf-8"),
-            ContentType='text/csv'
+            Body=output.getvalue().encode("utf-8"), ContentType="text/csv"
         )
         logger.info(f"Successfully wrote aggregated data to S3: {key}")
 
