@@ -1,49 +1,63 @@
 import json
 
-# import requests
-
-
-#
-#
-#
+from csv_process import get_s3file, process_data, write_to_s3
+from dynamodb import dynamodb_put_item
+from mail import publish_sns
+from setting import date
 
 
 def lambda_handler(event, context):
-    """Sample pure Lambda function
+    try:
+        #######################################################
+        # S3 Event
+        #######################################################
+        # S3のeventをキャッチ
+        for record in event["Records"]:
+            bucket_name = record["s3"]["bucket"]["name"]
+            obj_name = record["s3"]["object"]["key"]
+            destination_key = f"deggregate/test-{date}.csv"
 
-    Parameters
-    ----------
-    event: dict, required
-        API Gateway Lambda Proxy Input Format
+            #######################################################
+            # CSV
+            #######################################################
+            print(bucket_name)
+            print(obj_name)
+            print(destination_key)
 
-        Event doc: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format
+            # S3からファイルを読み込む
+            input_file = get_s3file(bucket_name, obj_name)
 
-    context: object, required
-        Lambda Context runtime methods and attributes
+            # CSVのデータを集計する。
+            aggregation = process_data(input_file)
 
-        Context doc: https://docs.aws.amazon.com/lambda/latest/dg/python-context-object.html
+            # 集計結果を加工して別のファイルとしてS3に書き込む。
+            write_to_s3(bucket_name, destination_key, aggregation)
 
-    Returns
-    ------
-    API Gateway Lambda Proxy Output Format: dict
+            #######################################################
+            # DynamoDB
+            #######################################################
+            # CSVファイルを更新した際のメタデータをDynamoDBテーブルにPUTする。
+            dynamodb_put_item(
+                bucket_name,
+                obj_name,
+                destination_key,
+            )
 
-        Return doc: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html
-    """
+            #######################################################
+            # SNS Publish
+            #######################################################
+            # SNSをpublishしてメールアドレスにファイルが更新されたことを通知。
+            publish_sns()
 
-    # try:
-    #     ip = requests.get("http://checkip.amazonaws.com/")
-    # except requests.RequestException as e:
-    #     # Send some context about this error to Lambda Logs
-    #     print(e)
-
-    #     raise e
-
-    return {
-        "statusCode": 200,
-        "body": json.dumps(
-            {
-                "message": "hello world",
-                # "location": ip.text.replace("\n", "")
+            return {
+                "statusCode": 200,
+                "body": json.dumps(
+                    {
+                        "message": "Lambda Handler Success!!!",
+                    }
+                ),
             }
-        ),
-    }
+
+    except Exception as e:
+        print(e)
+        raise

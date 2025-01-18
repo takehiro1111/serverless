@@ -36,8 +36,10 @@ Resources:
       Role: !GetAtt LambdaExecutionRole.Arn
       Environment:
         Variables:
+
           DYNAMODB_TABLE_NAME: !Ref CSVAggregateTable
           GMAIL: !Ref GmailAddressParameterStore
+          SNS_TOPIC_ARN: !GetAtt GmailAddressSNS.TopicArn
       Events:
         S3Event:
           Type: S3
