@@ -2,7 +2,7 @@ import uuid
 
 import boto3
 from botocore.exceptions import ClientError
-from setting import DEFAULT_REGION_NAME, DYNAMODB_TABLE, date, datetime, logger
+from setting import DEFAULT_REGION_NAME, DYNAMODB_TABLE, d_today, logger
 
 
 # DynamoDBへput
@@ -11,11 +11,9 @@ def dynamodb_put_item(bucket, src_obj, dst_obj):
         dynamodb = boto3.resource("dynamodb", region_name=DEFAULT_REGION_NAME)
         table = dynamodb.Table(DYNAMODB_TABLE)
         item_id = str(uuid.uuid4())
-        # datetimeオブジェクトをISO形式の文字列に変換
-        if isinstance(date, datetime):
-            date_str = date.isoformat()
-        else:
-            date_str = date
+
+        # date型から文字列型に変換
+        date_str = d_today.isoformat()
 
         item = {
             "id": item_id,

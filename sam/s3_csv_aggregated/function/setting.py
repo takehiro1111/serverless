@@ -1,7 +1,7 @@
 """変数、定数を定義するモジュール."""
 
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from logging import DEBUG, Formatter, StreamHandler, getLogger
 from os.path import dirname, join
 from zoneinfo import ZoneInfo
@@ -25,7 +25,7 @@ now = datetime.now(JST)
 timestamp = now.isoformat()
 
 TZ = ZoneInfo("Asia/Tokyo")
-date = datetime.now(TZ)
+d_today = date.today()
 
 # ロギング
 ## ログ定義
@@ -39,3 +39,16 @@ streamHandler.setFormatter(formatter)
 
 ## ロガーにハンドラーを追加
 logger.addHandler(streamHandler)
+
+
+# メールテンプレート
+MAIL = {
+    "subject": "CSV処理完了通知(Lambda)",
+    "message": """
+        CSVの処理が完了しました。
+
+        処理日時: {datetime}
+        S3バケット: {bucket}
+        オブジェクト: {obj}
+        """,
+}

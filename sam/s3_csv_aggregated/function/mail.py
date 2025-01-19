@@ -1,28 +1,22 @@
-import string
-
 import boto3
 from botocore.exceptions import ClientError
-from setting import SNS_TOPIC_ARN, SUBJECT, logger, timestamp
+from setting import MAIL, SNS_TOPIC_ARN, logger
 
 
 # SNSを経由してGmailへ送信
-def publish_sns(bucket_name, obj_name):
+def publish_sns(date_today, bucket, dest_obj):
     try:
         sns_client = boto3.client("sns")
         topic_arn = SNS_TOPIC_ARN
 
-        # メールのテンプレート文の変数に値を定義
-        with open(SUBJECT["message"]) as f:
-            t = string.Template(f.read())
-
-        message_contents = t.substitute(
-            datetime=timestamp, bucket=bucket_name, obj=obj_name
+        message = MAIL["message"].format(
+            datetime=date_today, bucket=bucket, obj=dest_obj
         )
 
         response = sns_client.publish(
             TopicArn=topic_arn,
-            Subject=SUBJECT["subject"],
-            Message=message_contents,
+            Subject=MAIL["subject"],
+            Message=message,
         )
         return response
 

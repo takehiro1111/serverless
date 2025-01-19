@@ -1,114 +1,106 @@
 import csv
 import io
+import pprint
 from collections import defaultdict
 
 import boto3
 from botocore.exceptions import ClientError
 from setting import DEFAULT_REGION_NAME, logger
 
-s3 = boto3.resource("s3", region_name=DEFAULT_REGION_NAME)
-s3_client = boto3.client("s3", region_name=DEFAULT_REGION_NAME)
+s3 = boto3.resource("s3")
+s3_client = boto3.client("s3")
 
 
 def get_s3file(bucket_name, key):
-    """S3からファイルを読み込む"""
+    s3obj = s3.Object(bucket_name, key).get()
+    data = io.TextIOWrapper(io.BytesIO(s3obj["Body"].read()))
+    print(data)
+    return data
+
+
+def read_csv_data(csv_file):
+    dict_reader = csv.DictReader(csv_file)
+    rows = list(dict_reader)
+    pprint.pprint(rows, width=100)
+
+    return rows
+
+
+# csvを整形
+def process_csv_data(process_csv_file):
+    reader = process_csv_file
+
+    sales = {}
+
+    for old_row in reader:
+        date = old_row["date"]
+        category = old_row["category"]
+        amount = int(old_row["amount"])
+        # transaction_count = old_row["date"]
+
+        key = f"{date}_{category}"
+
+        if key in sales:
+            sales[key] += amount
+        else:
+            sales[key] = amount
+    print(sales)
+
+    return sales
+
+
+# CSVに変換
+def convert_dict_to_csv(sales_data):
+    # 1. 新しいCSVファイルを作るための準備
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    # 2. ヘッダー行を書き込む
+    writer.writerow(["date", "category", "amount"])
+
+    # 3. 辞書のデータをCSV形式に変換
+    for key, amount in sales_data.items():
+        # キー（例：'2024-01-15_Drink'）を日付とカテゴリーに分割
+        date, category = key.split("_")
+        # 1行分のデータを書き込む
+        writer.writerow([date, category, amount])
+
+    # 4. 文字列をバイト形式に変換
+    print(output.getvalue().encode("utf-8"))
+    return output.getvalue().encode("utf-8")
+
+
+# S3にアップロード
+def upload_to_s3(bucket_name, key, row):
+    """CSVデータをS3にアップロード"""
+    content = row
+    if not content:
+        raise ValueError("CSV data is empty")
+
     try:
-        # ファイルの存在確認を効率的に行う
-        try:
-            s3_client.head_object(Bucket=bucket_name, Key="test.csv")
-        except ClientError as e:
-            if e.response["Error"]["Code"] == "404":
-                raise FileNotFoundError(
-                    f"File not found in S3: bucket={bucket_name}, key={key}"
-                )
-            else:
-                logger.error(f"head error :{e}")
-                raise
-
-        s3obj = s3.Object(bucket_name, key).get()
-        return io.TextIOWrapper(io.BytesIO(s3obj["Body"].read()))
-    except Exception as e:
-        logger.error(f"Error reading file from S3: {str(e)}")
-        raise
-
-
-def process_data(file_object):
-    """売上データを集計する"""
-    try:
-        # date と category でグループ化して集計するための辞書
-        sales_summary = defaultdict(
-            lambda: defaultdict(lambda: {"total_amount": 0, "transaction_count": 0})
+        s3_client.put_object(
+            Bucket=bucket_name,
+            Key=key,
+            Body=row,
+            # ContentType='text/csv'
         )
-        reader = csv.DictReader(file_object)
-
-        # ヘッダーの検証
-        required_fields = {"date", "category", "amount", "product_name"}
-        if not set(reader.fieldnames) >= required_fields:
-            missing = required_fields - set(reader.fieldnames)
-            raise ValueError(f"Missing required fields: {missing}")
-
-        row_number = 0
-        for row in reader:
-            row_number += 1
-            try:
-                date = row["date"].strip()
-                category = row["category"].strip()
-
-                # 金額を数値に変換
-                try:
-                    amount = int(row["amount"])
-                except ValueError:
-                    logger.error(
-                        f"Row {row_number}: Invalid amount format: {row['amount']}"
-                    )
-                    continue
-
-                # date と category でグループ化して集計
-                sales_summary[date][category]["total_amount"] += amount
-                sales_summary[date][category]["transaction_count"] += 1
-
-            except Exception as e:
-                logger.error(f"Error processing row {row_number}: {str(e)}")
-                continue
-
-        if not sales_summary:
-            raise ValueError("No valid data to aggregate")
-
-        logger.info(f"Successfully aggregated {row_number} rows")
-        return sales_summary
-
     except Exception as e:
-        logger.error(f"Error processing CSV data: {str(e)}")
+        print(f"Error uploading to S3: {str(e)}")
         raise
 
 
-def write_to_s3(bucket_name, key, sales_summary):
-    """集計結果をS3に書き込む"""
-    try:
-        output = io.StringIO()
-        writer = csv.writer(output)
+if __name__ == "__main__":
+    csv_file = get_s3file("event-bucket-csv-src-dev", "raw/test.csv")
+    row = read_csv_data(csv_file)
+    process_csv = process_csv_data(row)
+    convert_csv = convert_dict_to_csv(process_csv)
+    upload_to_s3("event-bucket-csv-src-dev", "deggregate/test.csv", convert_csv)
 
-        # ヘッダー行を書き込む
-        writer.writerow(["date", "category", "total_amount", "transaction_count"])
 
-        # 日付とカテゴリでソートして結果を書き込む
-        for date in sorted(sales_summary.keys()):
-            for category in sorted(sales_summary[date].keys()):
-                writer.writerow(
-                    [
-                        date,
-                        category,
-                        sales_summary[date][category]["total_amount"],
-                        sales_summary[date][category]["transaction_count"],
-                    ]
-                )
-
-        # S3にアップロード
-        s3.Object(bucket_name, key).put(
-            Body=output.getvalue().encode("utf-8"), ContentType="text/csv"
-        )
-        logger.info(f"Successfully wrote aggregated data to S3: {key}")
-
-    except Exception as e:
-        logger.error(f"Error writing to S3: {str(e)}")
-        raise
+# row
+# [{'amount': '1200', 'category': 'Drink', 'date': '2024-01-15', 'product_name': 'Coffee Beans'},
+#  {'amount': '800', 'category': 'Food', 'date': '2024-01-15', 'product_name': 'Sandwich'},
+#  {'amount': '500', 'category': 'Drink', 'date': '2024-01-15', 'product_name': 'Tea'},
+#  {'amount': '1500', 'category': 'Food', 'date': '2024-01-15', 'product_name': 'Cake'},
+#  {'amount': '1400', 'category': 'Drink', 'date': '2024-01-16', 'product_name': 'Coffee Beans'},
+#  {'amount': '900', 'category': 'Food', 'date': '2024-01-16', 'product_name': 'Sandwich'}]
