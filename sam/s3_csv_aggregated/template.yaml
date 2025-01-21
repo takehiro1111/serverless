@@ -38,6 +38,8 @@ Resources:
         Variables:
           DYNAMODB_TABLE_NAME: !Ref CSVAggregateTable
           GMAIL: !Ref GmailAddressParameterStore
+          SNS_TOPIC_ARN: !GetAtt GmailAddressSNS.TopicArn
+          S3_BUCKET_DST: !Ref CSVAggregateDSTBucket
       Events:
         S3Event:
           Type: S3
@@ -46,16 +48,16 @@ Resources:
             # https://docs.aws.amazon.com/ja_jp/AmazonS3/latest/userguide/notification-how-to-event-types-and-destinations.html#supported-notification-event-types
             Events:
               - s3:ObjectCreated:*
-      EventInvokeConfig:
-        DestinationConfig:
-          OnSuccess:
-            Type: SNS  # または SQS, Lambda, EventBridge
-            Destination: !Ref GmailAddressSNS  # 成功時の送信先
-          OnFailure:
-            Type: SNS
-            Destination: !Ref GmailAddressSNS  # 失敗時の送信先
-        MaximumEventAgeInSeconds: 3600  # イベントの最大有効期間
-        MaximumRetryAttempts: 2  # 再試行回数
+      # EventInvokeConfig:
+      #   DestinationConfig:
+      #     OnSuccess:
+      #       Type: SNS  # または SQS, Lambda, EventBridge
+      #       Destination: !Ref GmailAddressSNS  # 成功時の送信先
+      #     OnFailure:
+      #       Type: SNS
+      #       Destination: !Ref GmailAddressSNS  # 失敗時の送信先
+      #   MaximumEventAgeInSeconds: 3600  # イベントの最大有効期間
+      #   MaximumRetryAttempts: 2  # 再試行回数
 
   #######################################################
   # Cloudwatch Logs
