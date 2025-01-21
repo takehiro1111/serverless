@@ -18,13 +18,13 @@ DEFAULT_REGION_NAME = os.environ.get("DEFAULT_REGION_NAME")
 DYNAMODB_TABLE = os.environ.get("DYNAMODB_TABLE_NAME")
 SUBJECT = os.environ.get("MAIL")
 SNS_TOPIC_ARN = os.environ.get("SNS_TOPIC_ARN")
+S3_BUCKET_DST = os.environ.get("S3_BUCKET_DST")
 
 # タイムスタンプの生成
 JST = timezone(timedelta(hours=+9), "JST")
+TZ = ZoneInfo("Asia/Tokyo")
 now = datetime.now(JST)
 timestamp = now.isoformat()
-
-TZ = ZoneInfo("Asia/Tokyo")
 d_today = date.today()
 
 # ロギング

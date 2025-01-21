@@ -10,7 +10,7 @@ from csv_process import (
 )
 from dynamodb import dynamodb_put_item
 from mail import publish_sns
-from setting import d_today
+from setting import S3_BUCKET_DST, d_today
 
 
 def lambda_handler(event, context):
@@ -35,7 +35,7 @@ def lambda_handler(event, context):
         print(f"destination_key:{destination_key}")
 
         # S3からファイルを読み込む
-        input_file = get_s3file(bucket_name, "raw/test.csv")
+        input_file = get_s3file(bucket_name, obj_name)
 
         # ファイルからCSVのデータをdistのリストで読み込む。
         src_csv_data = read_csv_data(input_file)
@@ -47,15 +47,15 @@ def lambda_handler(event, context):
         convert_csv = convert_dict_to_csv(process_csv)
 
         # CSVに変換されたため、S3の異なるキーにアップロードする。
-        upload_to_s3("event-bucket-csv-dst-dev", destination_key, convert_csv)
+        upload_to_s3(S3_BUCKET_DST, destination_key, convert_csv)
 
         #######################################################
         # DynamoDB
         #######################################################
         # CSVファイルを更新した際のメタデータをDynamoDBテーブルにPUTする。
         dynamodb_put_item(
-            "event-bucket-csv-dst-dev",
-            "raw/test.csv",
+            S3_BUCKET_DST,
+            obj_name,
             destination_key,
         )
 

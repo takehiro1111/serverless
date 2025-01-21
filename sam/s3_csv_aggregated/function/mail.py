@@ -29,5 +29,5 @@ def publish_sns(date_today, bucket, dest_obj):
             logger.error(f"Indicates that the requested resource does not exist.")
             raise
         else:
-            logger.error(f"This is an unexpected error.")
+            logger.error(f"This is an unexpected error. {e}")
             raise
