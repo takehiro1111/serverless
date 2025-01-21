@@ -55,7 +55,7 @@ def lambda_handler(event, context):
         # CSVファイルを更新した際のメタデータをDynamoDBテーブルにPUTする。
         dynamodb_put_item(
             S3_BUCKET_DST,
-            obj_name,
+            src_s3["s3"]["object"]["key"],
             destination_key,
         )
 
