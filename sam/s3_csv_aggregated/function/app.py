@@ -1,5 +1,8 @@
+"""S3に保存しているCSVファイルを加工して別バケットに転送するモジュール."""
+
 import json
 import urllib.parse
+from typing import Any
 
 from csv_process import (
     convert_dict_to_csv,
@@ -13,27 +16,27 @@ from mail import publish_sns
 from setting import S3_BUCKET_DST, d_today
 
 
-def lambda_handler(event, context):
+def lambda_handler(event: dict[str, Any], context) -> dict[str, int | str]:
+    """Process CSV files from source S3 bucket and transfer to destination bucket.
+
+    Args:
+        event (dict[str, Any]): S3 Event Metadata.
+        context (_type_): Lambda Execution Context.
+
+    Returns:
+        dict[str, int | str]: If the operation is successful, status code 200 is returned.
+    """
     try:
-        #######################################################
-        # S3 Event
-        #######################################################
         # S3のeventをキャッチ
         src_s3 = event["Records"][0]
         bucket_name = src_s3["s3"]["bucket"]["name"]
-        obj_name = urllib.parse.unquote_plus(src_s3["s3"]["object"]["key"],encoding='utf-8')
-        print(src_s3)
-        print(f"urllib前:{src_s3["s3"]["object"]["key"]}")
-        print(f"urllib適用後:{urllib.parse.unquote_plus(src_s3["s3"]["object"]["key"],encoding='utf-8')}")
+        #  S3のキー名に日本語を使用する場合を想定したモジュールの使用(文字化けや文字変換系のエラー対策)
+        obj_name = urllib.parse.unquote_plus(
+            src_s3["s3"]["object"]["key"], encoding="utf-8"
+        )
         destination_key = f"deggregate/test-{d_today}.csv"
 
-        #######################################################
-        # CSV
-        #######################################################
-        print(f"bucket_name:{bucket_name}")
-        print(f"obj_name:{obj_name}")
-        print(f"destination_key:{destination_key}")
-
+        # csv_process.py
         # S3からファイルを読み込む
         input_file = get_s3file(bucket_name, obj_name)
 
@@ -49,21 +52,17 @@ def lambda_handler(event, context):
         # CSVに変換されたため、S3の異なるキーにアップロードする。
         upload_to_s3(S3_BUCKET_DST, destination_key, convert_csv)
 
-        #######################################################
-        # DynamoDB
-        #######################################################
+        # dynamodb.py
         # CSVファイルを更新した際のメタデータをDynamoDBテーブルにPUTする。
         dynamodb_put_item(
             S3_BUCKET_DST,
-            src_s3["s3"]["object"]["key"],
+            obj_name,
             destination_key,
         )
 
-        #######################################################
-        # SNS Publish
-        #######################################################
+        # mail.py
         # SNSをpublishしてメールアドレスにファイルが更新されたことを通知。
-        publish_sns(d_today,bucket_name,destination_key)
+        publish_sns(d_today, bucket_name, destination_key)
 
         return {
             "statusCode": 200,
