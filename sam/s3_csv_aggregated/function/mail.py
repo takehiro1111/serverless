@@ -8,7 +8,7 @@ from setting import MAIL, SNS_TOPIC_ARN, date, logger
 
 
 # SNSを経由してGmailへ送信
-def publish_sns(date_today: date, bucket: str, dest_obj: str) -> Any:
+def send_completion_email(date_today: date, bucket: str, dest_obj: str) -> Any:
     """Send an email notification after a series of processes is completed.
 
     Args:
@@ -21,14 +21,12 @@ def publish_sns(date_today: date, bucket: str, dest_obj: str) -> Any:
     """
     try:
         sns_client = boto3.client("sns")
-        topic_arn = SNS_TOPIC_ARN
-
         message = MAIL["message"].format(
             datetime=date_today, bucket=bucket, obj=dest_obj
         )
 
         response = sns_client.publish(
-            TopicArn=topic_arn,
+            TopicArn=SNS_TOPIC_ARN,
             Subject=MAIL["subject"],
             Message=message,
         )

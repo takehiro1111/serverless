@@ -5,7 +5,7 @@ import io
 import pprint
 
 import boto3
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, NoCredentialsError
 from setting import logger
 
 s3 = boto3.resource("s3")
@@ -210,6 +210,13 @@ def upload_to_s3(bucket_name: str, key: str, row: bytes) -> None:
             Bucket=bucket_name, Key=key, Body=row, ContentType="text/csv"
         )
 
+    except s3_client.exceptions.InvalidRequest as e:
+        logger.error(f"Invalid request: {e}")
+        raise
+
+    except NoCredentialsError as e:
+        logger.error(f"NoCredentialsError: {e}")
+
     except ClientError as e:
         error_code = e.response["Error"]["Code"]
         if error_code == "NoSuchKey":
@@ -218,15 +225,11 @@ def upload_to_s3(bucket_name: str, key: str, row: bytes) -> None:
             logger.error("Unexpected error message")
         raise
 
-    except s3_client.exceptions.InvalidRequest as e:
-        logger.error(f"Invalid request: {e}")
-        raise
-
 
 # デバッグ用
 # if __name__ == "__main__":
-#     csv_file = get_s3file("event-bucket-csv-src-dev", "raw/test.csv")
-#     row = read_csv_data(csv_file)
-#     process_csv = process_csv_data(row)
-#     convert_csv = convert_dict_to_csv(process_csv)
-#     upload_to_s3("event-bucket-csv-src-dev", "deggregate/test.csv", convert_csv)
+# csv_file = get_s3file("event-bucket-csv-src-dev", "raw/test.csv")
+# row = read_csv_data(csv_file)
+# process_csv = process_csv_data(row)
+# convert_csv = convert_dict_to_csv(process_csv)
+# upload_to_s3("event-bucket-csv-src-dev", "deggregate/test.csv", convert_csv)

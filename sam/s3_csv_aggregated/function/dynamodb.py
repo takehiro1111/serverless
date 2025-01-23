@@ -5,7 +5,7 @@ from typing import Any
 
 import boto3
 from botocore.exceptions import ClientError
-from setting import DEFAULT_REGION_NAME, DYNAMODB_TABLE, d_today, logger
+from setting import DEFAULT_REGION_NAME, DYNAMODB_TABLE, date_today, logger
 
 
 # DynamoDBへput
@@ -26,7 +26,7 @@ def dynamodb_put_item(bucket: str, src_obj: str, dst_obj: str) -> Any:
         item_id = str(uuid.uuid4())
 
         # date型からISO ISOフォーマット形式の文字列型に変換
-        date_str = d_today.isoformat()
+        date_str = date_today.isoformat()
 
         item = {
             "id": item_id,

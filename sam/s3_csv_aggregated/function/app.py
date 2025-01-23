@@ -12,8 +12,8 @@ from csv_process import (
     upload_to_s3,
 )
 from dynamodb import dynamodb_put_item
-from mail import publish_sns
-from setting import S3_BUCKET_DST, d_today
+from mail import send_completion_email
+from setting import S3_BUCKET_DST, date_today, logger
 
 
 def lambda_handler(event: dict[str, Any], context) -> dict[str, int | str]:
@@ -34,7 +34,7 @@ def lambda_handler(event: dict[str, Any], context) -> dict[str, int | str]:
         obj_name = urllib.parse.unquote_plus(
             src_s3["s3"]["object"]["key"], encoding="utf-8"
         )
-        destination_key = f"deggregate/test-{d_today}.csv"
+        destination_key = f"deggregate/test-{date_today}.csv"
 
         # csv_process.py
         # S3からファイルを読み込む
@@ -62,7 +62,7 @@ def lambda_handler(event: dict[str, Any], context) -> dict[str, int | str]:
 
         # mail.py
         # SNSをpublishしてメールアドレスにファイルが更新されたことを通知。
-        publish_sns(d_today, bucket_name, destination_key)
+        send_completion_email(date_today, bucket_name, destination_key)
 
         return {
             "statusCode": 200,
@@ -74,5 +74,5 @@ def lambda_handler(event: dict[str, Any], context) -> dict[str, int | str]:
         }
 
     except Exception as e:
-        print(e)
+        logger.error(f"Errpr Occured lamnbda_handler: {str(e)}")
         raise
