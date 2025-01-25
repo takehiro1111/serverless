@@ -1,4 +1,3 @@
-
 # count = 0
 
 # while count < 5:
@@ -14,7 +13,7 @@
 #   num = (int(input()))
 #   if 1 <= num <= 100:
 #     numbers.append(num)
-    
+
 # print(min(numbers))
 
 
@@ -23,7 +22,7 @@
 #     itr = int(input())
 #     if 1 <= itr <= 100:
 #         numbers.append(itr)
-        
+
 # print(min(numbers))
 
 # num = 0
@@ -86,14 +85,13 @@
 
 # input_line = input()
 # length = len(input_line)
-# ite = int(length) + 2 
+# ite = int(length) + 2
 
 # print("+" * ite )
 # print(f"+{input_line}+")
 # print("+" * ite )
 # print(f"+{input_line}+")
 # print("+++++++")
-
 
 
 # 5 10
@@ -104,25 +102,23 @@
 # 7
 
 
-  
-
 # number_enemies,my_first_level = list(map(int,input().split()))
 # for _ in range(number_enemies):
 #     enemies_level = int(input())
 #     # 勝ちの時
 #     if int(my_first_level) > enemies_level:
-#         # 相手のレベルを2で割って切り捨てた数値を自分のレベルに加算する。 
+#         # 相手のレベルを2で割って切り捨てた数値を自分のレベルに加算する。
 #         my_first_level += (enemies_level // 2)
-      
+
 #     # 引き分けの時
 #     elif int(my_first_level) == enemies_level:
 #       continue
-    
+
 #     # 負けの時
 #     elif int(my_first_level) < enemies_level:
 #       # 自分のレベルから//2する。
 #        my_first_level //= 2
-      
+
 # print(my_first_level)
 
 
@@ -140,7 +136,7 @@
 #     enemies_level = int(input())
 #     print(f"enemies_level:{enemies_level}")
 #     list_x.append(enemies_level)
-    
+
 # for list_enemies_level in list_x:
 #     if my_first_level > list_enemies_level:
 #         my_first_level += (list_enemies_level // 2)
@@ -176,7 +172,7 @@
 #     traffic += distance
 #   elif distance > TRAFFIC_JAM:
 #     continue
-  
+
 # print(int(traffic))
 
 # CARS, TRAFFIC_JAM = map(int,input().split())
@@ -198,19 +194,21 @@
 # else:
 #   print("No")
 
+
 # 変数xとyはcase内で初めて定義される
 def analyze_point(point):
-   match point:
-       case (0, 0):
-           return "原点"
-       case (0, y):  # yが初めて定義される
-           return f"y軸上の点 (y={y})"
-       case (x, 0):  # xが初めて定義される
-           return f"x軸上の点 (x={x})"
-       case (x, y):  # xとyが初めて定義される
-           return f"座標- ({x}, {y})"
+    match point:
+        case (0, 0):
+            return "原点"
+        case (0, y):  # yが初めて定義される
+            return f"y軸上の点 (y={y})"
+        case (x, 0):  # xが初めて定義される
+            return f"x軸上の点 (x={x})"
+        case (x, y):  # xとyが初めて定義される
+            return f"座標- ({x}, {y})"
+
 
 # 使用例
 point = (5, 3)
-result = analyze_point(point)# 座標 (5, 3) が返される
+result = analyze_point(point)  # 座標 (5, 3) が返される
 print(result)
