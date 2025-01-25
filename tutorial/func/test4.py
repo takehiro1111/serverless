@@ -196,19 +196,42 @@
 
 
 # 変数xとyはcase内で初めて定義される
-def analyze_point(point):
-    match point:
-        case (0, 0):
-            return "原点"
-        case (0, y):  # yが初めて定義される
-            return f"y軸上の点 (y={y})"
-        case (x, 0):  # xが初めて定義される
-            return f"x軸上の点 (x={x})"
-        case (x, y):  # xとyが初めて定義される
-            return f"座標- ({x}, {y})"
+# def analyze_point(point):
+#     match point:
+#         case (0, 0):
+#             return "原点"
+#         case (0, y):  # yが初めて定義される
+#             return f"y軸上の点 (y={y})"
+#         case (x, 0):  # xが初めて定義される
+#             return f"x軸上の点 (x={x})"
+#         case (x, y):  # xとyが初めて定義される
+#             return f"座標- ({x}, {y})"
 
 
-# 使用例
-point = (5, 3)
-result = analyze_point(point)  # 座標 (5, 3) が返される
-print(result)
+# # 使用例
+# point = (5, 3)
+# result = analyze_point(point)  # 座標 (5, 3) が返される
+# print(result)
+
+# count = 1
+# for i in range(4):
+#     translate = int(input())
+#     count = abs(translate - count)  # 現在の値と次の値の差の絶対値
+
+# print(count)
+ 
+    
+num = int(input())
+answer = 0
+difference = 1
+for _ in range(num):
+    # エレベーターが停まる階数
+    floor = int(input())
+    # 前の処理でエレベーターが停まった階数との差
+    # absで絶対値として算出
+    answer += abs(floor - difference)
+    print(f"ans:{answer}")
+    # 次の処理で差を測るための値を記録している。
+    difference = floor
+    print(f"i:{difference}")
+print(answer)
