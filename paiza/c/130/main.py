@@ -17,7 +17,6 @@ y y
 3
 """
 
-
 # yyの問題は3週目以降はスキップする。
 
 # 問題数を入力から受け取り、定数として定義。
@@ -26,29 +25,29 @@ QUESTIONS = int(input())
 answers = []
 # 問題ごとに3週目を解く必要があるかどうかを判定する。
 
-for i in range(1,QUESTIONS + 1):
-  # 問題の正誤を入力から受け取る。
-  fist,second = list(map(str,input().split()))
+for i in range(1, QUESTIONS + 1):
+    # 問題の正誤を入力から受け取る。
+    fist, second = list(map(str, input().split()))
 
-  # いずれかが正解ではない場合はイテレータを記録するためリストへ追加処理
-  if fist != "y" or second != "y":
-    # 問題番号を記録するためにrangeの番号をリストへ追加する。
-    answers.append(i)
-  
+    # いずれかが正解ではない場合はイテレータを記録するためリストへ追加処理
+    if fist != "y" or second != "y":
+        # 問題番号を記録するためにrangeの番号をリストへ追加する。
+        answers.append(i)
+
 
 print(len(answers))
 for num in answers:
-  print(num)
+    print(num)
 
 
 QUESTIONS = int(input())
 answers = []
 
 for i in range(1, QUESTIONS + 1):
-   first, second = input().split()
-   if first != "y" or second != "y":
-       answers.append(i)
+    first, second = input().split()
+    if first != "y" or second != "y":
+        answers.append(i)
 
 print(len(answers))
 for num in answers:
-   print(num)
+    print(num)
