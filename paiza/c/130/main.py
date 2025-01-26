@@ -22,9 +22,10 @@ y y
 # 問題数を入力から受け取り、定数として定義。
 QUESTIONS = int(input())
 
+# 問題番号の保管用リスト
 answers = []
-# 問題ごとに3週目を解く必要があるかどうかを判定する。
 
+# 問題ごとに3週目を解く必要があるかどうかを判定する。
 for i in range(1, QUESTIONS + 1):
     # 問題の正誤を入力から受け取る。
     fist, second = list(map(str, input().split()))
@@ -40,14 +41,14 @@ for num in answers:
     print(num)
 
 
-QUESTIONS = int(input())
-answers = []
+# QUESTIONS = int(input())
+# answers = []
 
-for i in range(1, QUESTIONS + 1):
-    first, second = input().split()
-    if first != "y" or second != "y":
-        answers.append(i)
+# for i in range(1, QUESTIONS + 1):
+#     first, second = input().split()
+#     if first != "y" or second != "y":
+#         answers.append(i)
 
-print(len(answers))
-for num in answers:
-    print(num)
+# print(len(answers))
+# for num in answers:
+#     print(num)
