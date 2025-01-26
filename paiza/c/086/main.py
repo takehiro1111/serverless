@@ -12,10 +12,9 @@ Torvalds
 Trvlds
 """
 
-
 # 入力の変数化
 str = str(input())
 
 # 入力された文字列からa,i,u,e,oを取り除く(区切り文字は無し)
-result = ''.join(c for c in str if c not in 'aeiouAEIOU')
+result = "".join(c for c in str if c not in "aeiouAEIOU")
 print(result)
