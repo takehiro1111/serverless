@@ -19,6 +19,7 @@ A_1 配列の各要素
 # 要素数 N , 整数 K
 n,k = map(int,input().split())
 
+#配列Aとそれに入る値を定義
 a = [int(input()) for _ in range(n)]
 ans= 0
 
