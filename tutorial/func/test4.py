@@ -219,8 +219,8 @@
 #     count = abs(translate - count)  # 現在の値と次の値の差の絶対値
 
 # print(count)
- 
-    
+
+
 # # 入力でエレベーターが動く回数を定義
 # num = int(input())
 
@@ -233,18 +233,17 @@
 # for _ in range(num):
 #     # 今回エレベーターが停まる階数
 #     floor = int(input())
-    
+
 #     # 前の処理でエレベーターが止まった階との差を加算
 #     answer += abs(floor - count)
-    
+
 #     # 前回記録として次の処理で差を測るための値を記録(初期化)
 #     count = floor
-    
+
 # print(answer)
 
 
-
-#ポイント
+# ポイント
 ## 入力をどう受け取るか。
 ## 条件分岐
 ### 大文字か小文字か区別する
@@ -258,7 +257,7 @@
 # for _ in range(NUMBER):
 #     # メッセージの入力をキャッチ
 #     MESSAGE = str(input())
-    
+
 #     # "Free"のみ大文字で始まるかチェック’
 #     ## "Free"が無いものをフィルターして除外
 #     words = MESSAGE.split()
@@ -268,14 +267,11 @@
 #             print(FREE)
 #         else:
 #             continue
-        
+
 #     if WORD  in FREE :
 #         print("Yes")
 #     else:
 #         print("No")
-
-
-
 
 
 # WORD = str(input())
@@ -284,14 +280,14 @@
 # for _ in range(NUMBER):
 #    MESSAGE = str(input())
 #    found = False
-   
+
 #    words = MESSAGE.split()
 #    for word in words:
-#        # 大文字小文字を区別して完全一致でチェック 
+#        # 大文字小文字を区別して完全一致でチェック
 #        if WORD == word or WORD in word:
 #            found = True
 #            break
-           
+
 #    print("Yes" if found else "No")
 
 
@@ -310,7 +306,3 @@
 # paiza_sub = re.sub('-{2,}',"-",PAIZA)
 
 # print(paiza_sub)
-
-
-
-
