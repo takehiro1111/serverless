@@ -221,17 +221,96 @@
 # print(count)
  
     
-num = int(input())
-answer = 0
-difference = 1
-for _ in range(num):
-    # エレベーターが停まる階数
-    floor = int(input())
-    # 前の処理でエレベーターが停まった階数との差
-    # absで絶対値として算出
-    answer += abs(floor - difference)
-    print(f"ans:{answer}")
-    # 次の処理で差を測るための値を記録している。
-    difference = floor
-    print(f"i:{difference}")
-print(answer)
+# # 入力でエレベーターが動く回数を定義
+# num = int(input())
+
+# # カウンター(初回の階数)を定義
+# count = 1
+
+# # エレベーターが何階分の距離を動いたか定義
+# answer = 0
+
+# for _ in range(num):
+#     # 今回エレベーターが停まる階数
+#     floor = int(input())
+    
+#     # 前の処理でエレベーターが止まった階との差を加算
+#     answer += abs(floor - count)
+    
+#     # 前回記録として次の処理で差を測るための値を記録(初期化)
+#     count = floor
+    
+# print(answer)
+
+
+
+#ポイント
+## 入力をどう受け取るか。
+## 条件分岐
+### 大文字か小文字か区別する
+
+# NGワードを定義
+# WORD = str(input())
+
+# # メールの件数
+# NUMBER = int(input())
+
+# for _ in range(NUMBER):
+#     # メッセージの入力をキャッチ
+#     MESSAGE = str(input())
+    
+#     # "Free"のみ大文字で始まるかチェック’
+#     ## "Free"が無いものをフィルターして除外
+#     words = MESSAGE.split()
+#     for i,word in enumerate(words):
+#         if WORD in word:
+#             FREE = word
+#             print(FREE)
+#         else:
+#             continue
+        
+#     if WORD  in FREE :
+#         print("Yes")
+#     else:
+#         print("No")
+
+
+
+
+
+# WORD = str(input())
+# NUMBER = int(input())
+
+# for _ in range(NUMBER):
+#    MESSAGE = str(input())
+#    found = False
+   
+#    words = MESSAGE.split()
+#    for word in words:
+#        # 大文字小文字を区別して完全一致でチェック 
+#        if WORD == word or WORD in word:
+#            found = True
+#            break
+           
+#    print("Yes" if found else "No")
+
+
+# t = "TanakaTakehiro"
+# ans = t.count("Ta")
+# print(ans)
+
+
+# --PA-I---ZA
+# -PA-I-ZA
+# 2つ以上のハイフンを1つに統一する。
+
+# import re
+
+# PAIZA = input()
+# paiza_sub = re.sub('-{2,}',"-",PAIZA)
+
+# print(paiza_sub)
+
+
+
+
