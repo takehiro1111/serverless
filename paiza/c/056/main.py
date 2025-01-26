@@ -36,6 +36,7 @@ for i in range(1, num + 1):
     test_score, absences = list(map(int, input().split()))
 
     # 合否判定
+    # max関数の引数で点数がマイナスにならないよう0を入れることで整数に制限している。
     final_score = max(0, test_score - (absences * 5))
     if final_score >= referense_point:
         print(i)
