@@ -68,24 +68,24 @@ next_live = "A"
 # 1ヶ月のループ
 for day in range(1, 32):
     # その日にバンドAのライブがあれば1、なければ0を設定
-    A = 1 if day in list_A else 0
+    has_live_A = 1 if day in list_A else 0
 
     # その日にバンドBのライブがあれば1、なければ0を設定
-    B = 1 if day in list_B else 0
+    has_live_B = 1 if day in list_B else 0
 
     # もし両方のバンドのライブがある場合（AとBが両方1の場合）
     ## Pythonは1がTrueで0がFalse
-    if A and B:
+    if has_live_A and has_live_B:
         # もしA,Bのライブが重なっている日の場合は行くべきバンドのライブを出力
         print(next_live)
         # 次回用に、今回がAだったらBに、BだったらAに交互に切り替える
         next_live = "B" if next_live == "A" else "A"
 
     # もしバンドAのライブのみある場合
-    elif A:
+    elif has_live_A:
         print("A")
     # もしバンドBのライブのみある場合
-    elif B:
+    elif has_live_B:
         print("B")
     # どちらのライブもない場合
     else:
