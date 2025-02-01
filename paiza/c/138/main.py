@@ -37,8 +37,9 @@ for score in side_jump_count:
     # リストの中の各記録と比較
     for compared_score in side_jump_count:
         # もし比較する記録が現在の記録より大きければ
-        # 例1: compared_score -> [55,57,55,52]のいずれかの要素 / score -> 55
-        # 例2: compared_score -> [55,57,55,52]のいずれかの要素 / score -> 57
+        # 例1: compared_score -> [55,57,55,52]の各要素をループで処理 / score -> 55
+        # 例2: compared_score -> [55,57,55,52]の各要素をループで処理 / score -> 57
+        # 例3: compared_score -> [55,57,55,52]の各要素をループで処理 / score -> 52
         if compared_score > score:
             # カウントを1増やす
             better_count += 1
