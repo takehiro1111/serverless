@@ -38,6 +38,7 @@ height, weight = list(map(int, input().split()))
 panel_score = [input() for i in range(1, height + 1)]
 # print(panel_score)
 # ['oxo', 'oox', 'oxo', 'xxx']
+# リストを各要素に分割
 flat_panel_score = [score_element for score in panel_score for score_element in score]
 # print(flat_panel_score)
 
@@ -45,6 +46,7 @@ flat_panel_score = [score_element for score in panel_score for score_element in 
 panel_num = [list(map(int, input().split())) for _ in range(height)]
 # print(panel_num)
 # ['1 2 3', '4 5 6', '7 8 9', '10 11 12']
+# リストを各要素に分割
 flat_panel_num = [num for row in panel_num for num in row]
 # print(flat_panel_num)
 
