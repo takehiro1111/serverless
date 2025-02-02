@@ -20,10 +20,14 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: monitor-waf-regionallimit
-      Handler: daily_monitor.lambda_handler
-      Role: !GetAtt LambdaExecutionRole.Arn 
+      Handler: handler.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
       MemorySize: 256
       Timeout: 300
+      Environment:
+        Variables:
+          SSM_PARAMETER_NAME: !GetAtt SlackWebhookParameter.Name
+          SSM_PARAMS_REGION: !Ref AWS::Region
 
   MonitorWafRuleLambdaPermission:
     Type: AWS::Lambda::Permission
@@ -31,7 +35,7 @@ Resources:
       FunctionName: !Ref MonitorWAFRuleFunction
       Action: lambda:InvokeFunction
       Principal: scheduler.amazonaws.com
-      SourceArn: !GetAtt MonitorCronEventBridge.Arn 
+      SourceArn: !GetAtt MonitorCronEventBridge.Arn
 
 ###########################################################
 # CloudWatch Logs
@@ -69,7 +73,7 @@ Resources:
       Name: /serverless/monitor-waf/SLACK_WEBHOOK_URL
       Type: String # CloudFromationでは、SecureStringがサポートされていないため。
       Value: '画面上で設定する'
-      
+
 
 ##########################################################
 # IAM
@@ -115,7 +119,7 @@ Resources:
                   Action:
                     - wafv2:ListWebACLs
                     - wafv2:GetWebACL
-                  Resource: 
+                  Resource:
                     - arn:aws:wafv2:us-east-1:*:global/webacl/*/*
 
           - PolicyName: sts_policy
@@ -125,9 +129,8 @@ Resources:
                 - Effect: Allow
                   Action:
                     - sts:*
-                  Resource: 
+                  Resource:
                     # クロスアカウントで対応するために、各アカウントに設定したIAMロールのARNを記載。
-                    - arn:aws:iam::685339645368:role/monitor-waf-rule # master
                     - arn:aws:iam::650251692423:role/monitor-waf-rule # development
 
   SchedulerExecutionRole:

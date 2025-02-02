@@ -1,17 +1,19 @@
 import datetime
+from typing import Any
 
 import boto3
 import requests
+from setting import SSM_PARAMETER_NAME, SSM_PARAMS_REGION
 
 
-def get_ssm_parameter() -> str:
+def get_ssm_parameter(default_region: str, ssm_param_name: str) -> Any:
     """
     SSMパラメータに格納しているWebHookのURLを取得
     """
+    ssm = boto3.client("ssm", default_region)
     try:
-        ssm = boto3.client("ssm", "ap-northeast-1")
         response = ssm.get_parameter(
-            Name="/serverless/monitor-waf/SLACK_WEBHOOK_URL",
+            Name=ssm_param_name,
             WithDecryption=True,
         )
         return response["Parameter"]["Value"]
@@ -26,12 +28,14 @@ def get_ssm_parameter() -> str:
         raise ValueError(f"Failed to get SSM parameter: {e}")
 
 
-def monitor_result_slack_notification(missing_rule_accounts):
+def monitor_result_slack_notification(
+    missing_rule_accounts: list[dict[str, str]]
+) -> None:
     """
     RegionalLimitのルールが設定されていない場合は、日次でSlack通知を行う。
     """
     try:
-        slack_webhook_url = get_ssm_parameter()
+        slack_webhook_url = get_ssm_parameter(SSM_PARAMS_REGION, SSM_PARAMETER_NAME)
         # 現在の日時を取得
         day = datetime.datetime.now()
         weekday = day.strftime("%a")
@@ -62,10 +66,12 @@ def monitor_result_slack_notification(missing_rule_accounts):
                     },
                 }
             )
+
         response = requests.post(
             slack_webhook_url,
             json=result_message,
             headers={"Content-Type": "application/json"},
+            timeout=30,
         )
         response.raise_for_status()
 
@@ -73,12 +79,12 @@ def monitor_result_slack_notification(missing_rule_accounts):
         raise ValueError(f"Request to Slack returned an error: {e}")
 
 
-def error_result_slack_notification():
+def error_result_slack_notification() -> None:
     """
     WAFの処理が何らかの理由でエラーになった場合のSlack通知する。
     """
     try:
-        webhook_url = get_ssm_parameter()
+        webhook_url = get_ssm_parameter(SSM_PARAMS_REGION, SSM_PARAMETER_NAME)
         # 現在の日時を取得
         day = datetime.datetime.now()
         weekday = day.strftime("%a")
@@ -101,6 +107,7 @@ def error_result_slack_notification():
             webhook_url,
             json=result_message,
             headers={"Content-Type": "application/json"},
+            timeout=30,
         )
         response.raise_for_status()
 
