@@ -32,7 +32,7 @@ p_{H,1} p_{H,2} ... p_{H,W}
 """
 
 # マス目の高さ、幅の受け取り
-height, weight = list(map(int, input().split()))
+height, Width = list(map(int, input().split()))
 
 # マス目のoxの入力の受け取り
 panel_score = [input() for i in range(1, height + 1)]
