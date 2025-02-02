@@ -32,10 +32,10 @@ p_{H,1} p_{H,2} ... p_{H,W}
 """
 
 # マス目の高さ、幅の受け取り
-height, weight = list(map(int,input().split()))
+height, weight = list(map(int, input().split()))
 
 # マス目のoxの入力の受け取り
-panel_score = [input() for i in range(1,height+1)]
+panel_score = [input() for i in range(1, height + 1)]
 # print(panel_score)
 # ['oxo', 'oox', 'oxo', 'xxx']
 flat_panel_score = [score_element for score in panel_score for score_element in score]
@@ -53,8 +53,8 @@ flat_panel_num = [num for row in panel_num for num in row]
 total_score = 0
 # リストの要素をマッピングする。
 for score, num in zip(flat_panel_score, flat_panel_num):
-  # "o"なら加算。
-  if score == "o":
-    total_score += num
+    # "o"なら加算。
+    if score == "o":
+        total_score += num
 
 print(total_score)

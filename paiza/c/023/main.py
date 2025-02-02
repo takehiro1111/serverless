@@ -44,5 +44,3 @@ for _ in range(1, PURCHASE + 1):
     # 当選番号と購入したクジの番号が合致しているかsetで積集合（共通部分）を求めて抽出する。
     mix = set(WIN_NAMBER) & set(lottery)
     print(len(mix))
-
-
