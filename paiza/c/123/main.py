@@ -35,17 +35,29 @@
 """
 
 # 人数の受け取り
-PEOPLES = int(input())
+NUM_PEOPLES = int(input())
 
 # 参加者の年齢の値を人数分受け取る。
-AGE = [int(input()) for _ in range(PEOPLES)]
+AGE = [int(input()) for _ in range(NUM_PEOPLES)]
 
 # 命令の数
 ORDERS = int(input())
 
 # 各参加者の豆の数を管理するリスト（最初は全員0個）
-## 「[0] * PEOPLES(5)」はは、人数分のインデックスの要素を0に指定している。
-beans_count = [0] * PEOPLES  # [0, 0, 0, 0, 0]
+## 「[0] * NUM_PEOPLES(5)」はは、人数分のインデックスの要素を0に指定している。
+beans_count = [0] * NUM_PEOPLES  # [0, 0, 0, 0, 0]
+
+
+def distribute_beans(ages, start_index, end_index, num_beans, beans_count=beans_count):
+    for i in range(start_index - 1, end_index):
+        # 命令の対象範囲
+        ## 開始位置がリストの要素と人とで合致するように調整している。
+        ### 例) インデックス:1 = 2番目の人(入力を2で受ける場合)
+        # その人の年齢まで豆を追加
+        # (豆の数と年齢を比較し小さい方を取る。豆の数が年齢を超えないよう上限設定も担っている。)
+        # リストの中の要素を追加ではなく、そのインデックスの要素を更新する書き方。
+        beans_count[i] = min(beans_count[i] + num_beans, ages[i])
+
 
 # 繰り返しで命令する。
 for _ in range(1, ORDERS + 1):
@@ -54,14 +66,9 @@ for _ in range(1, ORDERS + 1):
     ## 1番目の人から3番目の人までに等しく15個の豆を配る。
     start, end, beans = list(map(int, input().split()))
 
-    # 命令の対象範囲
-    ## 開始位置がリストの要素と人とで合致するように調整している。
-    ### 例) インデックス:1 = 2番目の人(入力を2で受ける場合)
-    for i in range(start - 1, end):
-        # その人の年齢まで豆を追加
-        # (豆の数と年齢を比較し小さい方を取る。豆の数が年齢を超えないよう上限設定も担っている。)
-        # リストの中の要素を追加ではなく、そのインデックスの要素を更新する書き方。
-        beans_count[i] = min(beans_count[i] + beans, AGE[i])
+    # 豆を追加していく関数の実行
+    distribute_beans(AGE, start, end, beans)
+
 
 # 結果を出力(リストをforで回す)
 for count in beans_count:
