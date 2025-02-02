@@ -1,0 +1,14 @@
+{
+    "US_EAST_1": "us-east-1",
+    "DEFAULT_ROLE_NAME": "monitor-waf-rule",
+    "ACCOUNTS": [
+        {
+            "account_name": "master",
+            "account_id": "685339645368"
+        },
+        {
+            "account_name": "development",
+            "account_id": "650251692423"
+        }
+    ]
+}
