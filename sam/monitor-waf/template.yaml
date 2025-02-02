@@ -1,0 +1,159 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Sample SAM Template for waf rule create and delete
+
+Globals:
+  Function:
+    CodeUri: function/
+    Runtime: python3.12
+    Architectures:
+        - arm64
+    LoggingConfig:
+      LogFormat: JSON
+
+Resources:
+###########################################################
+# Lambda
+###########################################################
+  MonitorWAFRuleFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: monitor-waf-regionallimit
+      Handler: handler.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      MemorySize: 256
+      Timeout: 300
+      Environment:
+        Variables:
+          SSM_PARAMETER_NAME: !GetAtt SlackWebhookParameter.Name
+          SSM_PARAMS_REGION: !Ref AWS::Region
+
+  MonitorWafRuleLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref MonitorWAFRuleFunction
+      Action: lambda:InvokeFunction
+      Principal: scheduler.amazonaws.com
+      SourceArn: !GetAtt MonitorCronEventBridge.Arn
+
+###########################################################
+# CloudWatch Logs
+###########################################################
+  MonitorWAFLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${MonitorWAFRuleFunction}
+      RetentionInDays: 14
+
+###########################################################
+# EventBridge Schedule
+###########################################################
+  MonitorCronEventBridge:
+    Type: AWS::Scheduler::Schedule
+    Properties:
+      Name: waf-monitor
+      Description: Cron to monitor Lambda every hour
+      ScheduleExpression: cron(0 11 ? * MON-FRI *)
+      ScheduleExpressionTimezone: Asia/Tokyo
+      State: ENABLED
+      FlexibleTimeWindow:
+          MaximumWindowInMinutes: 10
+          Mode: "FLEXIBLE"
+      Target:
+        Arn: !GetAtt MonitorWAFRuleFunction.Arn
+        RoleArn: !GetAtt SchedulerExecutionRole.Arn
+
+##########################################################
+# SSM ParameterStore
+##########################################################
+  SlackWebhookParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /serverless/monitor-waf/SLACK_WEBHOOK_URL
+      Type: String # CloudFromationでは、SecureStringがサポートされていないため。
+      Value: '画面上で設定する'
+
+
+##########################################################
+# IAM
+##########################################################
+  LambdaExecutionRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: monitor-waf-lambda-execution-role
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service: lambda.amazonaws.com
+              Action: sts:AssumeRole
+
+        Policies:
+          - PolicyName: logs_policy
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - logs:CreateLogGroup
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                  Resource: 'arn:aws:logs:ap-northeast-1:*:log-group:*:*'
+
+          - PolicyName: ssm_policy
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - ssm:GetParameter
+                  Resource: 'arn:aws:ssm:ap-northeast-1:*:*'
+
+          - PolicyName: waf_policy
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - wafv2:ListWebACLs
+                    - wafv2:GetWebACL
+                  Resource:
+                    - arn:aws:wafv2:us-east-1:*:global/webacl/*/*
+
+          - PolicyName: sts_policy
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - sts:*
+                  Resource:
+                    # クロスアカウントで対応するために、各アカウントに設定したIAMロールのARNを記載。
+                    - arn:aws:iam::650251692423:role/monitor-waf-rule # development
+
+  SchedulerExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: monitor-waf-event-scheduler-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: scheduler.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: InvokeLambdaPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 'lambda:InvokeFunction'
+                Resource: !GetAtt MonitorWAFRuleFunction.Arn
+
+Outputs:
+  MonitorWAFFunctionName:
+    Description: "Name of the Lambda function"
+    Value: !Ref MonitorWAFRuleFunction
