@@ -15,6 +15,14 @@ print(random_order)
 # 両方のリストをソートして比較 = 並び替えられるということ。
 print("Yes" if sorted(sort_order) == sorted(random_order) else "No")
 
+# sortメソッドはデフォルトだとNoneを返すため、出力は後工程になる。
+# sort_order.sort(reverse = True)
+# print(sort_order)
+
+# random_order.sort(reverse = True)
+# print(sort_order)
+
+
 # if sorted(sort_order) == sorted(random_order):
 #     print("Yes")
 # else:
