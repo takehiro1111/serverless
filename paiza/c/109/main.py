@@ -96,6 +96,9 @@ for user in sorted_users:
 #######################################################
 sorted_users = sorted(user_id, key=lambda x: int("".join(filter(str.isdigit, x))))
 
+for user in sorted_users:
+    print(user)
+
 # filter(str.isdigit,x)
 # filter()でx(イテレータ)の中で数値(True)で返るものを抽出する。
 #
@@ -124,5 +127,30 @@ sorted_users = sorted(user_id, key=lambda x: int("".join(filter(str.isdigit, x))
 # # 4. sorted()
 # これらの数値を基準に並び替え
 
-for user in sorted_users:
-    print(user)
+
+###########################################################################
+# より細かい説明
+###########################################################################
+# filterはPythonの組み込み関数で、処理結果をイテレータとして返すように設計されています。
+
+# x = "paiza1"
+
+# 1. filter(str.isdigit, x)
+#    - xの各文字に対してstr.isdigit()を適用
+#    - "p" → False
+#    - "a" → False
+#    - "i" → False
+#    - "z" → False
+#    - "a" → False
+#    - "1" → True
+#    - 結果：イテレータ ["1"] （数字の文字列）　※ <filter object>であってイテレータはリストではない。
+
+# 2. "".join()
+#    - イテレータの要素を空文字で結合
+#    - ["1"] → "1" （文字列）
+
+# 3. int()
+#    - 文字列を整数に変換
+#    - "1" → 1 （整数）
+
+# 4. この整数がsortedのキーとして使用される
