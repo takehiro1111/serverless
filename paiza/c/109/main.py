@@ -133,24 +133,25 @@ for user in sorted_users:
 ###########################################################################
 # filterはPythonの組み込み関数で、処理結果をイテレータとして返すように設計されています。
 
-# x = "paiza1"
+# 1. filter(str.isdigit, x)
+
+# filter(function, iterable)
+# x = "paiza12"
 
 # 1. filter(str.isdigit, x)
-#    - xの各文字に対してstr.isdigit()を適用
-#    - "p" → False
-#    - "a" → False
-#    - "i" → False
-#    - "z" → False
-#    - "a" → False
-#    - "1" → True
-#    - 結果：イテレータ ["1"] （数字の文字列）　※ <filter object>であってイテレータはリストではない。
+# - "p" → False
+# - "a" → False
+# - "i" → False
+# - "z" → False
+# - "a" → False
+# - "1" → True
+# - "2" → True
+# 結果：イテレータ（"1", "2"）
 
 # 2. "".join()
-#    - イテレータの要素を空文字で結合
-#    - ["1"] → "1" （文字列）
+# ("1", "2") → "12"
 
 # 3. int()
-#    - 文字列を整数に変換
-#    - "1" → 1 （整数）
+# "12" → 12
 
-# 4. この整数がsortedのキーとして使用される
+# 4. 整数12がsortedのキーに使用
