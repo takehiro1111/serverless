@@ -95,7 +95,7 @@ for user in sorted_users:
 # 正規表現を使用しない場合
 #######################################################
 sorted_users = sorted(user_id, key=lambda x: int("".join(filter(str.isdigit, x))))
-
+# keyで最終的にintが返るのでそれを基準に並び替えるが、sorted_usersの出力自体は入力の文字列と一緒。順番が変わるだけ。
 for user in sorted_users:
     print(user)
 
