@@ -37,14 +37,39 @@ USERS = int(input())
 
 ## ユーザーとIDを出力
 user_id = [input() for _ in range(1, USERS + 1)]
-print(user_id)
+# print(user_id)
 
 #######################################################
 # 正規表現を使用する場合
 #######################################################
 import re
 
-sorted_users = sorted(user_id, key=lambda x: int(re.findall(r"\d+", x)[0]))
+
+def extract_num(text):
+    return int(re.findall(r"\d+", text)[0])
+
+
+def main(users):
+    return sorted(users, key=extract_num)
+
+
+sorted_users = main(user_id)
+
+for user in sorted_users:
+    print(user)
+
+# sorted(users, key = extract_num)で分けることで
+# sortedの第一引数はイテラブルとしてここの文字列の要素が入るからtypeerrorにならない
+# re.findall()は文字列を期待しているため。
+# そのままuser_idを渡すとリストが入るため。
+# (ダメな例)
+# def main(x):
+#     sorted_users = sorted(int(re.findall(r"\d+", x)[0]))
+#     print(sorted_users)
+
+# sorted_users = sorted(user_id, key=lambda x: int(re.findall(r"\d+", x)[0]))
+
+
 # sorted_usersの要素がxに入る。
 # xの要素の中で数字にマッチする部分を抜き出してリストとして返す。
 # re.findall(r"\d+", x)がリストとして出力されるため、[0]で要素を抜き出す。
@@ -62,9 +87,6 @@ sorted_users = sorted(user_id, key=lambda x: int(re.findall(r"\d+", x)[0]))
 # ["99"][0] → "99"
 # ["100"][0] → "100"
 # ["1001"][0] → "1001"
-
-for user in sorted_users:
-    print(user)
 
 # lambda x: 各ユーザーID文字列を x として受け取る無名関数
 
