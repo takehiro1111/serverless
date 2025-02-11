@@ -1,6 +1,13 @@
-n = int(input())
-for i in range(1, n + 1):
-    if i != n:
-        print(i, end=" ")
+def fizz_buzz(i):
+    if i % 3 == 0 and i % 5 == 0:
+        return "FizzBuzz"
+    elif i % 5 == 0:
+        return "Buzz"
+    elif i % 3 == 0:
+        return "Fizz"
     else:
-        print(i)
+        return i
+
+
+for x in range(1, 101):
+    print(fizz_buzz(x))
