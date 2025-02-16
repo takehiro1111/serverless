@@ -3,14 +3,15 @@ from typing import Any
 
 import boto3
 import requests
-from setting import SSM_PARAMETER_NAME, SSM_PARAMS_REGION
+from setting import DEFAULT_REGION, SSM_PARAMETER_NAME
 
 
-def get_ssm_parameter(default_region: str, ssm_param_name: str) -> Any:
+def get_ssm_parameter(ssm_param_name: str) -> Any:
     """
     SSMパラメータに格納しているWebHookのURLを取得
     """
-    ssm = boto3.client("ssm", default_region)
+    ssm = boto3.client("ssm")
+    print(f"ssm type: {type(ssm)}")
     try:
         response = ssm.get_parameter(
             Name=ssm_param_name,
@@ -28,35 +29,39 @@ def get_ssm_parameter(default_region: str, ssm_param_name: str) -> Any:
         raise ValueError(f"Failed to get SSM parameter: {e}")
 
 
-def monitor_result_slack_notification(
-    missing_rule_accounts: list[dict[str, str]], date
-) -> None:
+def monitor_result_slack_notification(has_fargate: list[dict[str, str]]) -> None:
     """
     RegionalLimitのルールが設定されていない場合は、日次でSlack通知を行う。
     """
     try:
-        slack_webhook_url = get_ssm_parameter(SSM_PARAMS_REGION, SSM_PARAMETER_NAME)
+        slack_webhook_url = get_ssm_parameter(SSM_PARAMETER_NAME)
+        # 現在の日時を取得
+        day = datetime.datetime.now()
+        weekday = day.strftime("%a")
+        # 日付と曜日の表示形式を変更
+        day_format = day.strftime("%Y/%-m/%-d") + f"({weekday})"
         result_message = {
             "blocks": [
                 {
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": f"*{date}*\n\n*:rotating_light: ECS Capacity Provider was not returning*",
+                        "text": f"*{day_format}*\n\n*:bell: ECS Capacity Provider was not returning*",
                     },
                 },
                 {"type": "divider"},
             ]
         }
 
-        for rule in missing_rule_accounts:
+        for rule in has_fargate:
+            ecs_services = [i["service"] for i in rule["ecs_service"]]
             result_message["blocks"].append(
                 {
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
                         # データ構造を確認しておく。
-                        "text": f"*Account:* `{rule['account_name']}` / *ID:* `{rule['account_id']}` / *ECS:* `{rule['web_acl_name']}`",
+                        "text": f"*Account:* `{rule['account']}` / *ID:* `{rule['account_id']}` / *ECS:* `{ecs_services}`",
                     },
                 }
             )
@@ -73,19 +78,24 @@ def monitor_result_slack_notification(
         raise ValueError(f"Request to Slack returned an error: {e}")
 
 
-def error_result_slack_notification(date) -> None:
+def error_result_slack_notification() -> None:
     """
-    WAFの処理が何らかの理由でエラーになった場合のSlack通知する。
+    何らかの理由でエラーになった場合のSlack通知する。
     """
     try:
-        webhook_url = get_ssm_parameter(SSM_PARAMS_REGION, SSM_PARAMETER_NAME)
+        webhook_url = get_ssm_parameter(SSM_PARAMETER_NAME)
+        # 現在の日時を取得
+        day = datetime.datetime.now()
+        weekday = day.strftime("%a")
+        # 日付と曜日の表示形式を変更
+        day_format = day.strftime("%Y/%-m/%-d") + f"({weekday})"
         result_message = {
             "blocks": [
                 {
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": f"*{date}*\n\n*:no_entry_sign: Error occurred during WAF rules check*",
+                        "text": f"*{day_format}*\n\n*:no_entry_sign: Error occurred during ECS Capacity Provider check*",
                     },
                 }
             ]

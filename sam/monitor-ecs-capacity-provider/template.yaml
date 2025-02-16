@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  Sample SAM Template for waf rule create and delete
+  SAM Template for Moniter ECS Service Capacity Provider
 
 Globals:
   Function:
@@ -52,7 +52,7 @@ Resources:
   MonitorCronEventBridge:
     Type: AWS::Scheduler::Schedule
     Properties:
-      Name: waf-monitor
+      Name: monitor-ecs
       Description: Cron to monitor Lambda every hour
       ScheduleExpression: cron(0 23 ? * MON-FRI *)
       ScheduleExpressionTimezone: Asia/Tokyo
@@ -81,7 +81,7 @@ Resources:
   LambdaExecutionRole:
       Type: AWS::IAM::Role
       Properties:
-        RoleName: monitor-waf-lambda-execution-role
+        RoleName: monitor-ecs-lambda-execution-role
         AssumeRolePolicyDocument:
           Version: '2012-10-17'
           Statement:
@@ -111,16 +111,28 @@ Resources:
                     - ssm:GetParameter
                   Resource: 'arn:aws:ssm:ap-northeast-1:*:*'
 
-          - PolicyName: waf_policy
+          - PolicyName: ecs__service_policy
             PolicyDocument:
               Version: '2012-10-17'
               Statement:
                 - Effect: Allow
                   Action:
-                    - wafv2:ListWebACLs
-                    - wafv2:GetWebACL
+                    - ecs:ListClusters
+                  Resource: "*"
+
+          - PolicyName: ecs__service_policy
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - ecs:ListClusters
+                    - ecs:ListServices
+                    - ecs:DescribeServices
+                    - ecs:UpdateService
+                    - ecs:ListTagsForResource
                   Resource:
-                    - arn:aws:wafv2:us-east-1:*:global/webacl/*/*
+                    - arn:aws:ecs:ap-northeast-1:*:service/*/*
 
           - PolicyName: sts_policy
             PolicyDocument:
@@ -131,12 +143,12 @@ Resources:
                     - sts:*
                   Resource:
                     # クロスアカウントで対応するために、各アカウントに設定したIAMロールのARNを記載。
-                    - arn:aws:iam::650251692423:role/monitor-waf-rule # development
+                    - arn:aws:iam::650251692423:role/monitor-ecs-service-capacity-provider # development
 
   SchedulerExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: monitor-waf-event-scheduler-role
+      RoleName: monitor-ecs-event-scheduler-role
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:

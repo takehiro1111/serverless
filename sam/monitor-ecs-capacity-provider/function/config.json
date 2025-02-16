@@ -1,5 +1,6 @@
 {
   "DEFAULT_ROLE_NAME": "monitor-ecs-service-capacity-provider",
+  "DEFAULT_REGION": "ap-northeast-1",
   "ACCOUNTS": [
     {
       "account_name": "development",
