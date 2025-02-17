@@ -45,8 +45,9 @@ def list_ecs_clusters(ecs_client):
 
         stg_cluster_arns = []
         for cluster_arn in ecs_clusters["clusterArns"]:
-            # if "stg" in cluster_arn.lower():
-            stg_cluster_arns.append(cluster_arn)
+            # stgが含まれるクラスターに限定する。
+            if "stg" in cluster_arn.lower():
+                stg_cluster_arns.append(cluster_arn)
 
         # ECSクラスターをARNではなく、nameで取得したいため。
         cluster_names = [arn.split("/")[-1] for arn in stg_cluster_arns]
@@ -59,6 +60,7 @@ def list_ecs_clusters(ecs_client):
     except ClientError as e:
         logger.error(f"An unexpected error occurred list_cluster: {e}")
         raise
+
 
 # ECSサービス名の取得
 def get_ecs_service(ecs_client):
@@ -90,7 +92,6 @@ def get_ecs_service(ecs_client):
     except ClientError as e:
         logger.error(f"An unexpected error occurred get_ecs_service: {e}")
         raise
-        
 
 
 # キャパシティプロバイダー戦略の確認 & 必要に応じて修正
@@ -100,7 +101,9 @@ def check_capacity_provider(ecs_client, ecs_cluster, ecs_service):
         ## もし、FARGATEのものがあればそのサービス名を出力する。
         has_fargate_services = []
         for cluster in ecs_cluster:
-            response = ecs_client.describe_services(cluster=cluster, services=ecs_service)
+            response = ecs_client.describe_services(
+                cluster=cluster, services=ecs_service
+            )
 
             # サービスが見つからない場合はスキップ
             if not response["services"]:
@@ -109,13 +112,14 @@ def check_capacity_provider(ecs_client, ecs_cluster, ecs_service):
             # すべてのサービスをループで処理
             for service in response["services"]:
                 # タグ情報を取得
-                tags = ecs_client.list_tags_for_resource(resourceArn=service["serviceArn"])[
-                    "tags"
-                ]
+                tags = ecs_client.list_tags_for_resource(
+                    resourceArn=service["serviceArn"]
+                )["tags"]
 
                 # 本番環境を除くリソース等は、監視対象から外すよう処理をスキップ
                 if any(
-                    tag["key"] == "monitor-ecs" and tag["value"] == "false" for tag in tags
+                    tag["key"] == "monitor-ecs" and tag["value"] == "false"
+                    for tag in tags
                 ):
                     continue
 
@@ -157,11 +161,3 @@ def check_capacity_provider(ecs_client, ecs_cluster, ecs_service):
     except ClientError as e:
         logger.error(f"The specified cluster was not found.: {e}")
         raise
-
-
-# ECSサービスでキャパシティプロバイダー戦略の監視、必要なら修正
-# list_services
-# describe_services
-# update_service
-
-## 監視と修正の処理の関するを分けるかどうか。

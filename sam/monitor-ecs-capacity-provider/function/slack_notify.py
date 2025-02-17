@@ -1,17 +1,16 @@
-import datetime
 from typing import Any
 
 import boto3
 import requests
-from setting import DEFAULT_REGION, SSM_PARAMETER_NAME
 from logger import logger
+from setting import DEFAULT_REGION, SSM_PARAMETER_NAME
 
 
 def get_ssm_parameter(ssm_param_name: str) -> Any:
     """
     SSMパラメータに格納しているWebHookのURLを取得
     """
-    ssm = boto3.client("ssm")
+    ssm = boto3.client("ssm", region_name=DEFAULT_REGION)
     print(f"ssm type: {type(ssm)}")
     try:
         response = ssm.get_parameter(
@@ -31,7 +30,9 @@ def get_ssm_parameter(ssm_param_name: str) -> Any:
         raise
 
 
-def monitor_result_slack_notification(has_fargate: list[dict[str, str]],day_format) -> None:
+def monitor_result_slack_notification(
+    has_fargate: list[dict[str, str]], day_format
+) -> None:
     """
     RegionalLimitのルールが設定されていない場合は、日次でSlack通知を行う。
     """
@@ -51,14 +52,20 @@ def monitor_result_slack_notification(has_fargate: list[dict[str, str]],day_form
         }
 
         for rule in has_fargate:
-            ecs_services = [i["service"] for i in rule["ecs_service"]]
+            ecs_services_list = [i["service"] for i in rule["ecs_service"]]
+            print(f"ecs_services_list:{ecs_services_list}")
+
+            ecs_services_str = ",".join(
+                [f"{i}.`{service}`" for i, service in enumerate(ecs_services_list, 1)]
+            )
+            print(f"ecs_services_str:{ecs_services_str}")
+
             result_message["blocks"].append(
                 {
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        # データ構造を確認しておく。
-                        "text": f"*Account:* `{rule['account']}` / *ID:* `{rule['account_id']}` / *ECS:* `{ecs_services}`",
+                        "text": f"*Account:* `{rule['account']}` / *ID:* `{rule['account_id']}` / *ECS:* {ecs_services_str}",
                     },
                 }
             )

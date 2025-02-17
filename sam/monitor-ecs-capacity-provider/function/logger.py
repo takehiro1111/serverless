@@ -1,4 +1,4 @@
-from logging import DEBUG ,INFO, Formatter, StreamHandler, getLogger
+from logging import DEBUG, INFO, Formatter, StreamHandler, getLogger
 
 # ログ定義
 logger = getLogger(__name__)
