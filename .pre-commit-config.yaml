@@ -54,7 +54,7 @@ repos:
           - flake8-comprehensions  # リスト内包表記の改善提案
           - flake8-docstrings  # docstringのチェック
           - flake8-simplify  # コードの簡素化提案
-        args: [--max-line-length=100]
+        args: [--max-line-length=130]
 
   # 型チェック
   - repo: https://github.com/pre-commit/mirrors-mypy
