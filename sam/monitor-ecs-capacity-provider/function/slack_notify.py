@@ -4,6 +4,7 @@ from typing import Any
 import boto3
 import requests
 from setting import DEFAULT_REGION, SSM_PARAMETER_NAME
+from logger import logger
 
 
 def get_ssm_parameter(ssm_param_name: str) -> Any:
@@ -19,27 +20,23 @@ def get_ssm_parameter(ssm_param_name: str) -> Any:
         )
         return response["Parameter"]["Value"]
 
-    except ssm.exceptions.ParameterNotFound:
-        raise ValueError("SSM parameter not found.")
-
-    except ssm.exceptions.ParameterVersionNotFound:
-        raise ValueError("SSM parameter version not found.")
-
+    except ssm.exceptions.ParameterNotFound as e:
+        logger.error(f"SSM parameter not found.:{e}")
+        raise
+    except ssm.exceptions.ParameterVersionNotFound as e:
+        logger.error(f"SSM parameter version not found.:{e}")
+        raise
     except Exception as e:
-        raise ValueError(f"Failed to get SSM parameter: {e}")
+        logger.error(f"An unexpected error occurred.: {e}")
+        raise
 
 
-def monitor_result_slack_notification(has_fargate: list[dict[str, str]]) -> None:
+def monitor_result_slack_notification(has_fargate: list[dict[str, str]],day_format) -> None:
     """
     RegionalLimitのルールが設定されていない場合は、日次でSlack通知を行う。
     """
     try:
         slack_webhook_url = get_ssm_parameter(SSM_PARAMETER_NAME)
-        # 現在の日時を取得
-        day = datetime.datetime.now()
-        weekday = day.strftime("%a")
-        # 日付と曜日の表示形式を変更
-        day_format = day.strftime("%Y/%-m/%-d") + f"({weekday})"
         result_message = {
             "blocks": [
                 {
@@ -75,20 +72,16 @@ def monitor_result_slack_notification(has_fargate: list[dict[str, str]]) -> None
         response.raise_for_status()
 
     except requests.exceptions.RequestException as e:
-        raise ValueError(f"Request to Slack returned an error: {e}")
+        logger.error(f"Request to Slack returned an error: {e}")
+        raise
 
 
-def error_result_slack_notification() -> None:
+def error_result_slack_notification(day_format) -> None:
     """
     何らかの理由でエラーになった場合のSlack通知する。
     """
     try:
         webhook_url = get_ssm_parameter(SSM_PARAMETER_NAME)
-        # 現在の日時を取得
-        day = datetime.datetime.now()
-        weekday = day.strftime("%a")
-        # 日付と曜日の表示形式を変更
-        day_format = day.strftime("%Y/%-m/%-d") + f"({weekday})"
         result_message = {
             "blocks": [
                 {
@@ -109,6 +102,7 @@ def error_result_slack_notification() -> None:
         response.raise_for_status()
 
     except requests.exceptions.RequestException as e:
-        raise ValueError(
-            f"[error_result_slack_notification]Request to Slack returned an error: {e}"
+        logger.error(
+            f"error_result_slack_notification Request to Slack returned an error: {e}"
         )
+        raise

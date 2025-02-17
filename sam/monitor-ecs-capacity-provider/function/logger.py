@@ -1,8 +1,8 @@
-from logging import INFO, Formatter, StreamHandler, getLogger
+from logging import DEBUG ,INFO, Formatter, StreamHandler, getLogger
 
 # ログ定義
 logger = getLogger(__name__)
-logger.setLevel(INFO)
+logger.setLevel(DEBUG)
 formatter = Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
 # 標準出力

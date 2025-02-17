@@ -7,7 +7,7 @@ from monitor_ecs import (
     list_ecs_clusters,
     sts_assume_role,
 )
-from setting import ACCOUNTS, IAM_ROLE_NAME_MONITOR_ECS
+from setting import ACCOUNTS, IAM_ROLE_NAME_MONITOR_ECS, day_format
 from slack_notify import (
     error_result_slack_notification,
     monitor_result_slack_notification,
@@ -47,7 +47,7 @@ def lambda_handler(event, context):
 
         if fargate_services:
             # Slack通知。
-            monitor_result_slack_notification(fargate_services)
+            monitor_result_slack_notification(fargate_services, day_format)
         else:
             logger.info("All ECS services are running on FARGATE_SPOT successfully.")
 
@@ -57,7 +57,7 @@ def lambda_handler(event, context):
         }
 
     except Exception as e:
-        error_result_slack_notification()
+        error_result_slack_notification(day_format)
         logger.error(f"handler occured error: {e}", exc_info=True)
         return {
             "statusCode": 500,
