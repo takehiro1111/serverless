@@ -1,3 +1,5 @@
+"""This module provides functions to send notifications to Slack."""
+
 from typing import Any
 
 import boto3
@@ -6,9 +8,13 @@ from logger import logger
 from setting import DEFAULT_REGION, SSM_PARAMETER_NAME
 
 
-def get_ssm_parameter(ssm_param_name: str) -> Any:
+def get_webhook_url(ssm_param_name: str) -> str:
     """
-    SSMパラメータに格納しているWebHookのURLを取得
+    Retrieve the WebHook URL stored in the SSM Parameter Store.
+
+    :param ssm_param_name: The name of the SSM parameter
+    :return: The WebHook URL
+    :raises: Various exceptions if the parameter is not found or an unexpected error occurs
     """
     ssm = boto3.client("ssm", region_name=DEFAULT_REGION)
     print(f"ssm type: {type(ssm)}")
@@ -31,13 +37,17 @@ def get_ssm_parameter(ssm_param_name: str) -> Any:
 
 
 def monitor_result_slack_notification(
-    has_fargate: list[dict[str, str]], day_format
+    has_fargate: list[dict[str, Any]], day_format: str
 ) -> None:
     """
-    RegionalLimitのルールが設定されていない場合は、日次でSlack通知を行う。
+    Send a daily Slack notification if ECS services are not running on FARGATE_SPOT.
+
+    :param has_fargate: List of dictionaries containing account information and ECS services
+    :param day_format: Formatted date string
+    :raises: RequestException if the request to Slack fails
     """
     try:
-        slack_webhook_url = get_ssm_parameter(SSM_PARAMETER_NAME)
+        slack_webhook_url = get_webhook_url(SSM_PARAMETER_NAME)
         result_message = {
             "blocks": [
                 {
@@ -83,12 +93,15 @@ def monitor_result_slack_notification(
         raise
 
 
-def error_result_slack_notification(day_format) -> None:
+def error_result_slack_notification(day_format: str) -> None:
     """
-    何らかの理由でエラーになった場合のSlack通知する。
+    Send a Slack notification if an error occurs during the ECS Capacity Provider check.
+
+    :param day_format: Formatted date string
+    :raises: RequestException if the request to Slack fails
     """
     try:
-        webhook_url = get_ssm_parameter(SSM_PARAMETER_NAME)
+        webhook_url = get_webhook_url(SSM_PARAMETER_NAME)
         result_message = {
             "blocks": [
                 {
