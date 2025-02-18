@@ -11,6 +11,8 @@
     - 新しいデプロイメントを強制化する。(タスクが起動していない時間帯のため、必要か要確認)
 5. FARGATEから戻し忘れていたECSサービスをSlack通知。
 
+# 構成
+![構成](monitor-ecs-capacity-provider.svg)
 
 # pipenvで仮想環境の構築（mac）
 
