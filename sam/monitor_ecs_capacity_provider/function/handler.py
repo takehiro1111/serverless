@@ -1,12 +1,18 @@
+"""Lambda Handler.
+
+This module defines a Lambda function that checks the ECS Capacity Provider Strategy
+in the STG environment and notifies Slack if any services other than FARGATE are running.
+"""
+
 import json
 
-from logger import logger
-from monitor_ecs import (
+from check_ecs import (
     check_capacity_provider,
     get_ecs_service,
     list_ecs_clusters,
     sts_assume_role,
 )
+from logger import logger
 from setting import ACCOUNTS, IAM_ROLE_NAME_MONITOR_ECS, day_format
 from slack_notify import (
     error_result_slack_notification,
@@ -15,6 +21,15 @@ from slack_notify import (
 
 
 def lambda_handler(event, context):
+    """lambda_handler.
+
+    Check the ECS Capacity Provider Strategy, and if there is any ECS running on FARGATE,
+    modify the service to FARGATE_SPOT and notify Slack.
+
+    :param event: Event information
+    :param context: Lambda execution context
+    :return: A dictionary containing a status code and a message
+    """
     try:
         fargate_services = []
         for account in ACCOUNTS:

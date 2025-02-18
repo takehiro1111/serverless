@@ -1,9 +1,11 @@
+"""This module sets up the configuration."""
+
 import datetime
 import json
 import os
 
 # AWSアカウントのsetting
-## ローカルのパスではなくLambdaだと独自のパスになるため不要。
+# ローカルのパスではなくLambdaだと独自のパスになるため不要。
 # file_path = os.path.join(os.path.dirname(__file__), "config.json")
 with open("config.json") as accounts:
     config = json.load(accounts)

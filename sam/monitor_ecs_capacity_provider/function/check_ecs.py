@@ -1,3 +1,11 @@
+"""This module provides functions to interact with AWS ECS and manage ECS Capacity Provider Strategy.
+
+It includes functions to assume IAM roles, list ECS clusters and services, and check and update
+the ECS Capacity Provider Strategy for services running on FARGATE.
+"""
+
+from typing import Any
+
 import boto3
 from botocore.exceptions import ClientError
 from logger import logger
@@ -5,8 +13,17 @@ from setting import DEFAULT_REGION
 
 
 # IAMの認証
-## sre-management(master)アカウントのlambdaから各アカウントのstsでAssumeRoleする。
-def sts_assume_role(account_name, account_id, role_name):
+# sre-management(master)アカウントのlambdaから各アカウントのstsでAssumeRoleする。
+def sts_assume_role(account_name: str, account_id: str, role_name: str) -> boto3.client:
+    """
+    Assume an IAM role in another AWS account and return an ECS client.
+
+    :param account_name: The name of the AWS account
+    :param account_id: The ID of the AWS account
+    :param role_name: The name of the IAM role to assume
+    :return: An ECS client authenticated with the assumed role
+    :raises: Various exceptions if the role assumption fails
+    """
     sts = boto3.client("sts")
     try:
         # AssumeRoleで一時クレデンシャルを取得
@@ -39,7 +56,14 @@ def sts_assume_role(account_name, account_id, role_name):
 
 
 # クラスター名の取得から
-def list_ecs_clusters(ecs_client):
+def list_ecs_clusters(ecs_client: boto3.client) -> list[str]:
+    """
+    List ECS clusters in the STG environment.
+
+    :param ecs_client: An authenticated ECS client
+    :return: A list of ECS cluster names
+    :raises: ClientError if an unexpected error occurs
+    """
     try:
         ecs_clusters = ecs_client.list_clusters()
 
@@ -63,7 +87,14 @@ def list_ecs_clusters(ecs_client):
 
 
 # ECSサービス名の取得
-def get_ecs_service(ecs_client):
+def get_ecs_service(ecs_client: boto3.client) -> list[str]:
+    """
+    List ECS services in the STG environment.
+
+    :param ecs_client: An authenticated ECS client
+    :return: A list of ECS service names
+    :raises: Various exceptions if the service listing fails
+    """
     try:
         ecs_cluster_names = list_ecs_clusters(ecs_client)
 
@@ -95,10 +126,21 @@ def get_ecs_service(ecs_client):
 
 
 # キャパシティプロバイダー戦略の確認 & 必要に応じて修正
-def check_capacity_provider(ecs_client, ecs_cluster, ecs_service):
+def check_capacity_provider(
+    ecs_client: boto3.client, ecs_cluster: list[str], ecs_service: list[str]
+) -> list[dict[str, Any]]:
+    """
+    Check and update the ECS Capacity Provider Strategy for services running on FARGATE.
+
+    :param ecs_client: An authenticated ECS client
+    :param ecs_cluster: A list of ECS cluster names
+    :param ecs_service: A list of ECS service names
+    :return: A list of services that were running on FARGATE
+    :raises: Various exceptions if the capacity provider check or update fails
+    """
     try:
         # 個々のECSサービス(stg)でキャパシティプロバイダを確認する。
-        ## もし、FARGATEのものがあればそのサービス名を出力する。
+        # もし、FARGATEのものがあればそのサービス名を出力する。
         has_fargate_services = []
         for cluster in ecs_cluster:
             response = ecs_client.describe_services(
@@ -116,7 +158,6 @@ def check_capacity_provider(ecs_client, ecs_cluster, ecs_service):
                     resourceArn=service["serviceArn"]
                 )["tags"]
 
-                # 本番環境を除くリソース等は、監視対象から外すよう処理をスキップ
                 if any(
                     tag["key"] == "monitor-ecs" and tag["value"] == "false"
                     for tag in tags
