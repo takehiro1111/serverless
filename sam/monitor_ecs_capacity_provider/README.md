@@ -4,7 +4,8 @@
 3. 全アカウントを対象にSTG環境のECSサービスのCapacityProviderStrategyのweightがFARAGATE_SPOTに戻っているか監視しにいく。
   - FARGATE_SPOTの場合は何もしない。
   - FARGATEの場合は、以降の手順へ進む。
-  - 例外でFARGATEにしているものはタグで`monitor=False`が入っていればcontinueで処理を抜けさせて対象外にする。
+  - 例外でFARGATEにしているものはタグで`monitor=false`が入っていればcontinueで処理を抜けさせて対象外にする。
+  - ECSクラスターの処理の時点で`stg`の文字列が含まれているリソースに限定することでSTG環境のECSのみ処理範囲に含むようフィルターをかける。
 4. Capacity Provider Strategyで以下の割合にする。
   - FARAGATEを0
   - FARGATE_SPOTを1
