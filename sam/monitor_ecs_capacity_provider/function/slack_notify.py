@@ -8,7 +8,7 @@ from logger import logger
 from setting import DEFAULT_REGION, SSM_PARAMETER_NAME
 
 
-def get_ssm_parameter(ssm_param_name: str) -> str:
+def get_webhook_url(ssm_param_name: str) -> str:
     """
     Retrieve the WebHook URL stored in the SSM Parameter Store.
 
@@ -47,7 +47,7 @@ def monitor_result_slack_notification(
     :raises: RequestException if the request to Slack fails
     """
     try:
-        slack_webhook_url = get_ssm_parameter(SSM_PARAMETER_NAME)
+        slack_webhook_url = get_webhook_url(SSM_PARAMETER_NAME)
         result_message = {
             "blocks": [
                 {
@@ -101,7 +101,7 @@ def error_result_slack_notification(day_format: str) -> None:
     :raises: RequestException if the request to Slack fails
     """
     try:
-        webhook_url = get_ssm_parameter(SSM_PARAMETER_NAME)
+        webhook_url = get_webhook_url(SSM_PARAMETER_NAME)
         result_message = {
             "blocks": [
                 {

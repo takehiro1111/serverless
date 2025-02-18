@@ -12,8 +12,6 @@ from logger import logger
 from setting import DEFAULT_REGION
 
 
-# IAMの認証
-# sre-management(master)アカウントのlambdaから各アカウントのstsでAssumeRoleする。
 def sts_assume_role(account_name: str, account_id: str, role_name: str) -> boto3.client:
     """
     Assume an IAM role in another AWS account and return an ECS client.
@@ -34,6 +32,7 @@ def sts_assume_role(account_name: str, account_id: str, role_name: str) -> boto3
             RoleSessionName=f"monitor_ecs_service_{account_name}_{account_id}",
         )
 
+        # AssumeRoleでクロスアカウントでのアクセスを実行するクライアントを定義。
         ecs_client = boto3.client(
             "ecs",
             aws_access_key_id=response["Credentials"]["AccessKeyId"],
@@ -55,7 +54,6 @@ def sts_assume_role(account_name: str, account_id: str, role_name: str) -> boto3
         raise
 
 
-# クラスター名の取得から
 def list_ecs_clusters(ecs_client: boto3.client) -> list[str]:
     """
     List ECS clusters in the STG environment.
@@ -69,7 +67,7 @@ def list_ecs_clusters(ecs_client: boto3.client) -> list[str]:
 
         stg_cluster_arns = []
         for cluster_arn in ecs_clusters["clusterArns"]:
-            # stgが含まれるクラスターに限定する。
+            # "stg"の文字列が含まれるECSクラスターのみを処理対象に限定する。
             if "stg" in cluster_arn.lower():
                 stg_cluster_arns.append(cluster_arn)
 
@@ -86,7 +84,6 @@ def list_ecs_clusters(ecs_client: boto3.client) -> list[str]:
         raise
 
 
-# ECSサービス名の取得
 def get_ecs_service(ecs_client: boto3.client) -> list[str]:
     """
     List ECS services in the STG environment.
@@ -103,7 +100,7 @@ def get_ecs_service(ecs_client: boto3.client) -> list[str]:
             response = ecs_client.list_services(
                 cluster=cluster,
             )
-            # 多次元配列で持つ。
+            # クラスターの中に複数サービスを含むため、データ構造は多次元配列で持つ。
             ecs_service_arn.extend(response["serviceArns"])
         print(f"ecs_service_arn:{ecs_service_arn}")
 
@@ -125,7 +122,6 @@ def get_ecs_service(ecs_client: boto3.client) -> list[str]:
         raise
 
 
-# キャパシティプロバイダー戦略の確認 & 必要に応じて修正
 def check_capacity_provider(
     ecs_client: boto3.client, ecs_cluster: list[str], ecs_service: list[str]
 ) -> list[dict[str, Any]]:
@@ -147,7 +143,7 @@ def check_capacity_provider(
                 cluster=cluster, services=ecs_service
             )
 
-            # サービスが見つからない場合はスキップ
+            # 存在しないサービスに対して不要な処理を行わないようにしている。
             if not response["services"]:
                 continue
 
@@ -158,6 +154,8 @@ def check_capacity_provider(
                     resourceArn=service["serviceArn"]
                 )["tags"]
 
+                # monitor-ecs = false のタグが存在すれば処理しない。
+                # stg環境でも意図的にFargateを使用する場合を想定。
                 if any(
                     tag["key"] == "monitor-ecs" and tag["value"] == "false"
                     for tag in tags
@@ -165,6 +163,7 @@ def check_capacity_provider(
                     continue
 
                 for provider in service.get("capacityProviderStrategy", []):
+                    # Fargateが1になっている場合はFargateSpotに変更する。
                     if (
                         provider["capacityProvider"] == "FARGATE"
                         and provider["weight"] >= 1
