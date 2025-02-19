@@ -135,58 +135,69 @@ def check_capacity_provider(
     :raises: Various exceptions if the capacity provider check or update fails
     """
     try:
+        # サービス名リストを10個ずつのバッチに分割する関数
+        def chunk_list(lst, chunk_size=10):
+            return [lst[i:i + chunk_size] for i in range(0, len(lst), chunk_size)]
+
         # 個々のECSサービス(stg)でキャパシティプロバイダを確認する。
         # もし、FARGATEのものがあればそのサービス名を出力する。
         has_fargate_services = []
         for cluster in ecs_cluster:
-            response = ecs_client.describe_services(
-                cluster=cluster, services=ecs_service
-            )
+            service_batches = chunk_list(ecs_service)
 
-            # 存在しないサービスに対して不要な処理を行わないようにしている。
-            if not response["services"]:
-                continue
+            for service_batch in service_batches:
+                response = ecs_client.describe_services(
+                    cluster=cluster, services=service_batch
+                )
 
-            # すべてのサービスをループで処理
-            for service in response["services"]:
-                # タグ情報を取得
-                tags = ecs_client.list_tags_for_resource(
-                    resourceArn=service["serviceArn"]
-                )["tags"]
-
-                # monitor-ecs = false のタグが存在すれば処理しない。
-                # stg環境でも意図的にFargateを使用する場合を想定。
-                if any(
-                    tag["key"] == "monitor-ecs" and tag["value"] == "false"
-                    for tag in tags
-                ):
+                # 存在しないサービスに対して不要な処理を行わないようにしている。
+                if not response["services"]:
                     continue
 
-                for provider in service.get("capacityProviderStrategy", []):
-                    # Fargateが1になっている場合はFargateSpotに変更する。
-                    if (
-                        provider["capacityProvider"] == "FARGATE"
-                        and provider["weight"] >= 1
-                    ):
-                        has_fargate_services.append(
-                            {"cluster": ecs_cluster, "service": service["serviceName"]}
-                        )
+                # すべてのサービスをループで処理
+                for service in response["services"]:
+                    # タグ情報を取得
+                    tags = ecs_client.list_tags_for_resource(
+                        resourceArn=service["serviceArn"]
+                    )["tags"]
 
-                        # FARGATEの重みを0に、FARGATE_SPOTの重みを1に更新
-                        ecs_client.update_service(
-                            cluster=cluster,
-                            service=service["serviceName"],
-                            forceNewDeployment=True,
-                            capacityProviderStrategy=[
-                                {"capacityProvider": "FARGATE", "weight": 0, "base": 0},
-                                {
-                                    "capacityProvider": "FARGATE_SPOT",
-                                    "weight": 1,
-                                    "base": 0,
-                                },
-                            ],
-                        )
-                        print(f"Faragate ECS Service:{service['serviceName']}")
+                    # monitor-ecs = false のタグが存在すれば処理しない。
+                    # stg環境でも意図的にFargateを使用する場合を想定。
+                    if any(
+                        tag["key"] == "monitor-ecs" and tag["value"] == "false"
+                        for tag in tags
+                    ):
+                        continue
+
+                    for provider in service.get("capacityProviderStrategy", []):
+                        # Fargateが1になっている場合はFargateSpotに変更する。
+                        if (
+                            provider["capacityProvider"] == "FARGATE"
+                            and provider["weight"] >= 1
+                        ):
+                            has_fargate_services.append(
+                                {"cluster": cluster, "service": service["serviceName"]}
+                            )
+
+                            # FARGATEの重みを0に、FARGATE_SPOTの重みを1に更新
+                            ecs_client.update_service(
+                                cluster=cluster,
+                                service=service["serviceName"],
+                                forceNewDeployment=True,
+                                capacityProviderStrategy=[
+                                    {
+                                        "capacityProvider": "FARGATE",
+                                        "weight": 0,
+                                        "base": 0,
+                                    },
+                                    {
+                                        "capacityProvider": "FARGATE_SPOT",
+                                        "weight": 1,
+                                        "base": 0,
+                                    },
+                                ],
+                            )
+                            print(f"Faragate ECS Service:{service['serviceName']}")
         return has_fargate_services
 
     except ecs_client.exceptions.ClusterNotFoundException as e:

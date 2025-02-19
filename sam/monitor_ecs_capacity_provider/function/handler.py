@@ -51,14 +51,14 @@ def lambda_handler(event, context):
                 ecs_client, ecs_clusters, ecs_services
             )
 
-        if has_fargate:
-            fargate_services.append(
-                {
-                    "account": account["account_name"],
-                    "account_id": account["account_id"],
-                    "ecs_service": has_fargate,
-                }
-            )
+            if has_fargate:
+                fargate_services.append(
+                    {
+                        "account": account["account_name"],
+                        "account_id": account["account_id"],
+                        "ecs_service": has_fargate,
+                    }
+                )
 
         # FargateSpotへ戻し忘れたECSが存在する場合はSlack通知して開発者へ認識してもらう。
         if fargate_services:
