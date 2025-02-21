@@ -33,10 +33,10 @@ def lambda_handler(event, context):
     try:
         fargate_services = []
         for account in ACCOUNTS:
-            # AssumeRoleして認証する。
+            # AssumeRoleして各アカウントのリソースへの認可行う。
             ecs_client = sts_assume_role(
-                account["account_name"],
-                account["account_id"],
+                account["name"],
+                account["id"],
                 IAM_ROLE_NAME_MONITOR_ECS,
             )
 
@@ -51,16 +51,16 @@ def lambda_handler(event, context):
                 ecs_client, ecs_clusters, ecs_services
             )
 
-        if has_fargate:
-            fargate_services.append(
-                {
-                    "account": account["account_name"],
-                    "account_id": account["account_id"],
-                    "ecs_service": has_fargate,
-                }
-            )
+            # Slack通知用にFargateになっていたECSサービスをリストへ追加。
+            if has_fargate:
+                fargate_services.append(
+                    {
+                        "account": account["name"],
+                        "ecs_service": has_fargate,
+                    }
+                )
+        logger.info(f"has_fargate_services_list:{fargate_services}")
 
-        # FargateSpotへ戻し忘れたECSが存在する場合はSlack通知して開発者へ認識してもらう。
         if fargate_services:
             monitor_result_slack_notification(fargate_services, day_format)
         else:
@@ -72,7 +72,6 @@ def lambda_handler(event, context):
         }
 
     except Exception as e:
-        # Lambdaの処理がエラーになった場合も検知できるようSlack通知を実施。
         error_result_slack_notification(day_format)
         logger.error(f"handler occured error: {e}", exc_info=True)
         return {
