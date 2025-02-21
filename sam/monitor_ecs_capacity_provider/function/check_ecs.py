@@ -226,7 +226,7 @@ def check_ecs_service(ecs_client, cluster, service_batch):
         raise
 
 
-# このModuleでmeinの関数
+# このModuleでmainの関数
 def check_capacity_provider(
     ecs_client: boto3.client, ecs_cluster: list[str], ecs_service: list[str]
 ) -> list[dict[str, Any]]:
