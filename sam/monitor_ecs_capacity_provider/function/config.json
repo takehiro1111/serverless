@@ -1,9 +1,0 @@
-{
-  "DEFAULT_ROLE_NAME": "monitor-ecs-service-capacity-provider",
-  "ACCOUNTS": [
-    {
-      "account_name": "development",
-      "account_id": "650251692423"
-    }
-  ]
-}

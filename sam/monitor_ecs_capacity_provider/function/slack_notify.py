@@ -17,7 +17,6 @@ def get_webhook_url(ssm_param_name: str) -> str:
     :raises: Various exceptions if the parameter is not found or an unexpected error occurs
     """
     ssm = boto3.client("ssm", region_name=DEFAULT_REGION)
-    print(f"ssm type: {type(ssm)}")
     try:
         response = ssm.get_parameter(
             Name=ssm_param_name,
@@ -54,7 +53,7 @@ def monitor_result_slack_notification(
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": f"*{day_format}*\n\n*:bell: ECS Capacity Provider was not returning*",
+                        "text": f"*{day_format}*\n\n*:bell: [INFO] ECS Capacity Provider Fargate detected. *",
                     },
                 },
                 {"type": "divider"},
@@ -63,19 +62,15 @@ def monitor_result_slack_notification(
 
         for rule in has_fargate:
             ecs_services_list = [i["service"] for i in rule["ecs_service"]]
-            print(f"ecs_services_list:{ecs_services_list}")
-
             ecs_services_str = ",".join(
-                [f"{i}.`{service}`" for i, service in enumerate(ecs_services_list, 1)]
+                [f"`{service}`" for service in ecs_services_list]
             )
-            print(f"ecs_services_str:{ecs_services_str}")
-
             result_message["blocks"].append(
                 {
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": f"*Account:* `{rule['account']}` / *ID:* `{rule['account_id']}` / *ECS:* {ecs_services_str}",
+                        "text": f"*Account:* `{rule['account']}` / *ECS:* {ecs_services_str}",
                     },
                 }
             )
