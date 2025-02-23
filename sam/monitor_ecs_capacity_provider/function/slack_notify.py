@@ -9,46 +9,29 @@ from setting import DEFAULT_REGION, SSM_PARAMETER_NAME
 
 
 class SlackNotify:
-    """
-    A class for sending notifications to Slack about ECS Capacity Provider status.
-
-    This class manages webhook URL retrieval from SSM Parameter Store and sends notifications
-    to Slack when ECS services are running on FARGATE or when errors occur during checks.
-
-    Attributes:
-        day_format (str): The formatted date string for the notification
-        has_fargate (list[dict[str, Any]]): List of services running on FARGATE
-        get_webhook_url (str): The Slack webhook URL retrieved from SSM Parameter Store
-    """
+    """Handles Slack notifications for ECS Capacity Provider monitoring."""
 
     def __init__(self, day_format: str, has_fargate: list[dict[str, Any]]):
-        """
-        Initialize the SlackNotify instance.
+        """Initialize with notification data.
 
         Args:
-            day_format (str): The formatted date string for the notification
-            has_fargate (list[dict[str, Any]]): List of services running on FARGATE
+            day_format: Date string for notification
+            has_fargate: List of services running on FARGATE
         """
         self.day_format = day_format
         self.has_fargate = has_fargate
-        self.get_webhook_url = self._get_webhook_url(SSM_PARAMETER_NAME, DEFAULT_REGION)
+        self.webhook_url = self._get_webhook_url(SSM_PARAMETER_NAME, DEFAULT_REGION)
 
     @staticmethod
     def _get_webhook_url(ssm_parameter_name: str, region_name: str) -> str:
-        """
-        Retrieve the Slack webhook URL from SSM Parameter Store.
+        """Get Slack webhook URL from SSM Parameter Store.
 
         Args:
-            ssm_parameter_name (str): The name of the SSM parameter containing the webhook URL
-            region_name (str): The AWS region where the SSM parameter is stored
+            ssm_parameter_name: SSM parameter name for webhook URL
+            region_name: AWS region name
 
         Returns:
-            str: The webhook URL for Slack notifications
-
-        Raises:
-            ParameterNotFound: If the specified SSM parameter does not exist
-            ParameterVersionNotFound: If the specified parameter version does not exist
-            Exception: For other unexpected errors
+            Slack webhook URL
         """
         ssm = boto3.client("ssm", region_name=region_name)
         try:
@@ -68,37 +51,47 @@ class SlackNotify:
             logger.error(f"An unexpected error occurred.: {e}")
             raise
 
-    def monitor_result_slack_notification(self) -> None:
-        """
-        Send a notification to Slack when ECS services are found running on FARGATE.
+    def _requests_post(self, message: dict[str, Any]) -> None:
+        response = requests.post(
+            self.webhook_url,
+            json=message,
+            headers={"Content-Type": "application/json"},
+            timeout=30,
+        )
+        response.raise_for_status()
 
-        This method constructs and sends a formatted message to Slack containing details
-        about the ECS services that are running on FARGATE instead of FARGATE_SPOT.
+    def _create_message(
+        self, message_text: str, add_service_info: bool = False
+    ) -> dict[str, Any]:
+        """Create formatted Slack message.
 
-        Raises:
-            RequestException: If the request to Slack fails
+        Args:
+            message_text: Main message text
+            add_service_info: Whether to add service information
+
+        Returns:
+            Formatted message dictionary
         """
-        try:
-            slack_webhook_url = self.get_webhook_url
-            result_message = {
-                "blocks": [
-                    {
-                        "type": "section",
-                        "text": {
-                            "type": "mrkdwn",
-                            "text": f"*{self.day_format}*\n\n*:bell: [INFO] ECS Capacity Provider Fargate detected. *",
-                        },
+        message = {
+            "blocks": [
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": f"*{self.day_format}*\n\n{message_text}",
                     },
-                    {"type": "divider"},
-                ]
-            }
+                },
+                {"type": "divider"},
+            ]
+        }
 
+        if add_service_info and self.has_fargate:
             for rule in self.has_fargate:
                 ecs_services_list = [i["service"] for i in rule["ecs_service"]]
                 ecs_services_str = ",".join(
                     [f"`{service}`" for service in ecs_services_list]
                 )
-                result_message["blocks"].append(
+                message["blocks"].append(
                     {
                         "type": "section",
                         "text": {
@@ -108,51 +101,27 @@ class SlackNotify:
                     }
                 )
 
-            response = requests.post(
-                slack_webhook_url,
-                json=result_message,
-                headers={"Content-Type": "application/json"},
-                timeout=30,
-            )
-            response.raise_for_status()
+        return message
 
+    def monitor_result_slack_notification(self) -> None:
+        """Send notification about services running on FARGATE."""
+        try:
+            message = self._create_message(
+                "*:bell: [INFO] ECS Capacity Provider Fargate detected. *",
+                add_service_info=True,
+            )
+            self._requests_post(message)
         except requests.exceptions.RequestException as e:
-            logger.error(f"Request to Slack returned an error: {e}")
+            logger.error(f"Error sending monitor notification: {e}")
             raise
 
     def error_result_slack_notification(self) -> None:
-        """
-        Send an error notification to Slack when ECS Capacity Provider check fails.
-
-        This method sends a notification to Slack when an error occurs during the
-        ECS Capacity Provider monitoring process.
-
-        Raises:
-            RequestException: If the request to Slack fails
-        """
+        """Send error notification for monitoring failures."""
         try:
-            webhook_url = self.get_webhook_url
-            result_message = {
-                "blocks": [
-                    {
-                        "type": "section",
-                        "text": {
-                            "type": "mrkdwn",
-                            "text": f"*{self.day_format}*\n\n*:no_entry_sign: Error occurred during ECS Capacity Provider check*",
-                        },
-                    }
-                ]
-            }
-            response = requests.post(
-                webhook_url,
-                json=result_message,
-                headers={"Content-Type": "application/json"},
-                timeout=30,
+            message = self._create_message(
+                "*:no_entry_sign: Error occurred during ECS Capacity Provider check*"
             )
-            response.raise_for_status()
-
+            self._requests_post(message)
         except requests.exceptions.RequestException as e:
-            logger.error(
-                f"error_result_slack_notification Request to Slack returned an error: {e}"
-            )
+            logger.error(f"Error sending error notification: {e}")
             raise

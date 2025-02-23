@@ -5,6 +5,7 @@ in the STG environment and notifies Slack if any services other than FARGATE are
 """
 
 import json
+from typing import Any
 
 from logger import logger
 from manage_ecs import ECSManager
@@ -12,59 +13,65 @@ from setting import ACCOUNTS, IAM_ROLE_NAME_MONITOR_ECS, day_format
 from slack_notify import SlackNotify
 
 
-def lambda_handler(event, context):
-    """Check ECS Capacity Provider Strategy and update services to use FARGATE_SPOT.
-
-    This function checks all ECS services across specified AWS accounts for any
-    services running on FARGATE. If found, it updates them to use FARGATE_SPOT
-    and sends a notification through Slack.
+def process_account(account: dict) -> list:
+    """Process ECS operations for a single AWS account.
 
     Args:
-        event: AWS Lambda event object containing event data
-        context: AWS Lambda context object providing runtime information
+        account: Dictionary containing account info (name and ID)
 
     Returns:
-        dict: Response containing status code and execution result
-            {
-                'statusCode': int,
-                'body': str
-            }
+        List of services running on FARGATE
+    """
+    ecs_manager = ECSManager(account["name"], account["id"], IAM_ROLE_NAME_MONITOR_ECS)
 
-    Raises:
-        Exception: Any unexpected errors during execution will be caught,
-            logged, and notified via Slack
+    ecs_clusters = ecs_manager.list_ecs_clusters()
+    ecs_services = ecs_manager.list_ecs_services()
+
+    main_processing = ecs_manager.main_ecs_processing(ecs_clusters, ecs_services)
+
+    return main_processing
+
+
+def collect_fargate_services(accounts: list) -> list:
+    """Collect FARGATE service information from all AWS accounts.
+
+    Args:
+        accounts: List of account dictionaries containing name and ID
+
+    Returns:
+        List of FARGATE services grouped by account
     """
     fargate_services = []
-    slack_notifier = SlackNotify(day_format, fargate_services)
+    for account in accounts:
+        has_fargate = process_account(account)
+        if has_fargate:
+            fargate_services.append(
+                {
+                    "account": account["name"],
+                    "ecs_service": has_fargate,
+                }
+            )
+    logger.debug(f"has_fargate_services_list:{fargate_services}")
+
+    return fargate_services
+
+
+def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
+    """Check and update ECS Capacity Provider Strategy.
+
+    Args:
+        event: Lambda event object
+        context: Lambda context object
+
+    Returns:
+        Dict with status code and execution result
+    """
     try:
-        for account in ACCOUNTS:
-            # AssumeRoleして各アカウントのリソースへの認可行う。
-            # クラスのインスタンス化学
-            ecs_manager = ECSManager(
-                account["name"], account["id"], IAM_ROLE_NAME_MONITOR_ECS
-            )
+        # FargateになっているままのECSサービスを要素に含んだリスト
+        fargate_services = collect_fargate_services(ACCOUNTS)
 
-            # ECSクラスターのリストを取得
-            ecs_clusters = ecs_manager.list_ecs_clusters()
-
-            # ECSサービスの一覧を取得
-            ecs_services = ecs_manager.list_ecs_services()
-
-            # FaragateになっていたECSサービスがリストとして入る。
-            has_fargate = ecs_manager.update_capacity_provider(
-                ecs_clusters, ecs_services
-            )
-
-            # Slack通知用にFargateになっていたECSサービスをリストへ追加。
-            if has_fargate:
-                fargate_services.append(
-                    {
-                        "account": account["name"],
-                        "ecs_service": has_fargate,
-                    }
-                )
-        logger.info(f"has_fargate_services_list:{fargate_services}")
-
+        # Slack通知の処理
+        slack_notifier = SlackNotify(day_format, fargate_services)
         if fargate_services:
             slack_notifier.monitor_result_slack_notification()
         else:

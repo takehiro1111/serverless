@@ -13,28 +13,15 @@ from setting import DEFAULT_REGION
 
 
 class ECSManager:
-    """
-    A class for managing AWS ECS services and their Capacity Provider Strategy.
-
-    This class handles AWS ECS operations including cross-account access via IAM role assumption,
-    listing ECS clusters and services, and managing capacity provider strategies. It specifically
-    focuses on monitoring and updating services running on FARGATE to use FARGATE_SPOT instead.
-
-    Attributes:
-        account_name (str): Name of the AWS account
-        account_id (int): ID of the AWS account
-        role_name (str): Name of the IAM role to assume
-        ecs_client (boto3.client): Authenticated ECS client for AWS operations
-    """
+    """Manages AWS ECS services and their Capacity Provider Strategy."""
 
     def __init__(self, account_name: str, account_id: int, role_name: str):
-        """
-        Initialize ECSManager with account details and create an authenticated ECS client.
+        """Initialize with AWS account details.
 
         Args:
-            account_name: Name of the AWS account
-            account_id: ID of the AWS account
-            role_name: Name of the IAM role to assume for cross-account access
+            account_name: AWS account name
+            account_id: AWS account ID
+            role_name: IAM role name to assume
         """
         self.account_name = account_name
         self.account_id = account_id
@@ -43,16 +30,10 @@ class ECSManager:
 
     # 各AWSアカウントへクロスアカウントアクセスを行うための権限をAssumeRoleで取得。
     def _assume_role(self) -> boto3.client:
-        """
-        Assume an IAM role for cross-account access and create an ECS client.
+        """Assume IAM role for cross-account access.
 
         Returns:
-            boto3.client: Authenticated ECS client
-
-        Raises:
-            MalformedPolicyDocumentException: If the IAM policy is invalid
-            ExpiredTokenException: If the AWS credentials have expired
-            ClientError: For other AWS API related errors
+            Authenticated ECS client
         """
         sts = boto3.client("sts")
         try:
@@ -85,14 +66,10 @@ class ECSManager:
 
     # ECSクラスターの一覧を取得。
     def list_ecs_clusters(self) -> list[str]:
-        """
-        List all ECS clusters in the account.
+        """Get list of ECS clusters.
 
         Returns:
-            list[str]: List of ECS cluster names
-
-        Raises:
-            ClientError: If an error occurs while listing clusters
+            List of cluster names
         """
         try:
             ecs_clusters = self.ecs_client.list_clusters()
@@ -100,8 +77,8 @@ class ECSManager:
             stg_cluster_arns = []
             for cluster_arn in ecs_clusters["clusterArns"]:
                 # "stg"の文字列が含まれるECSクラスターのみを処理対象に限定する。
-                # if "stg" in cluster_arn.lower():
-                stg_cluster_arns.append(cluster_arn)
+                if "stg" in cluster_arn.lower():
+                    stg_cluster_arns.append(cluster_arn)
 
             # ECSクラスターをARNではなくnameで取得したいため。
             cluster_names = [arn.split("/")[-1] for arn in stg_cluster_arns]
@@ -114,27 +91,32 @@ class ECSManager:
 
     # クラスターに対応するECSサービスの一覧を取得。
     def list_ecs_services(self) -> list[str]:
-        """
-        List all ECS services across all clusters.
+        """Get list of ECS services across all clusters.
 
         Returns:
-            list[str]: List of ECS service names
-
-        Raises:
-            ClusterNotFoundException: If a specified cluster is not found
-            ServerException: If an AWS server error occurs
-            ClientError: For other AWS API related errors
+            List of service names
         """
         try:
             ecs_cluster_names = self.list_ecs_clusters()
-
             ecs_service_arn = []
+
             for cluster in ecs_cluster_names:
-                response = self.ecs_client.list_services(
-                    cluster=cluster,
-                )
-                # クラスターの中に複数サービスを含むため、データ構造は多次元配列で持つ。
-                ecs_service_arn.extend(response["serviceArns"])
+                # ECSサービス数が多い場合にページネーションして処理する際のフラグ機能を持つ変数
+                next_token = None
+
+                while True:
+                    if next_token:
+                        response = self.ecs_client.list_services(
+                            cluster=cluster, nextToken=next_token
+                        )
+                    else:
+                        response = self.ecs_client.list_services(cluster=cluster)
+                    ecs_service_arn.extend(response["serviceArns"])
+
+                    # 次のページがあるかチェック
+                    next_token = response.get("nextToken")
+                    if not next_token:
+                        break
 
             ecs_service_names = [arn.split("/")[-1] for arn in ecs_service_arn]
             return ecs_service_names
@@ -171,33 +153,47 @@ class ECSManager:
             chunk_ecs_services.append(chunk)
 
         # ログ出力
-        logger.info(f"chunk_ecs_services:{chunk_ecs_services}")
+        logger.debug(f"chunk_ecs_services:{chunk_ecs_services}")
 
         return chunk_ecs_services
 
+    def update_ecs_services(self, cluster: str, service: dict[str, Any]) -> None:
+        """Update ECS service capacity provider settings.
+
+        Args:
+            cluster: Cluster name
+            service: Service details
+        """
+        self.ecs_client.update_service(
+            cluster=cluster,
+            service=service["serviceName"],
+            forceNewDeployment=True,
+            capacityProviderStrategy=[
+                {"capacityProvider": "FARGATE", "weight": 0, "base": 0},
+                {
+                    "capacityProvider": "FARGATE_SPOT",
+                    "weight": 1,
+                    "base": 0,
+                },
+            ],
+        )
+
     # FargateになっているECSサービスをFargateSpotに戻す処理。
-    def _update_capacity_provider(
+    def update_capacity_provider(
         self,
         cluster: str,
         service: dict[str, Any],
         has_fargate_chunk: list[dict[str, str]],
     ) -> bool:
-        """
-        Update service capacity provider from FARGATE to FARGATE_SPOT.
+        """Update service from FARGATE to FARGATE_SPOT.
 
         Args:
-            cluster: Name of the ECS cluster
-            service: Service details dictionary
-            has_fargate_chunk: List to track services updated from FARGATE to FARGATE_SPOT
+            cluster: Cluster name
+            service: Service details
+            has_fargate_chunk: List to track updated services
 
         Returns:
-            bool: True if update was successful
-
-        Raises:
-            ClusterNotFoundException: If the specified cluster is not found
-            ServiceNotFoundException: If the specified service is not found
-            ServiceNotActiveException: If the specified service is not active
-            ClientError: For other AWS API related errors
+            True if update successful
         """
         try:
             for provider in service.get("capacityProviderStrategy", []):
@@ -210,19 +206,7 @@ class ECSManager:
                         {"cluster": cluster, "service": service["serviceName"]}
                     )
 
-                self.ecs_client.update_service(
-                    cluster=cluster,
-                    service=service["serviceName"],
-                    forceNewDeployment=True,
-                    capacityProviderStrategy=[
-                        {"capacityProvider": "FARGATE", "weight": 0, "base": 0},
-                        {
-                            "capacityProvider": "FARGATE_SPOT",
-                            "weight": 1,
-                            "base": 0,
-                        },
-                    ],
-                )
+                self.update_ecs_services(cluster, service)
             return True
 
         except self.ecs_client.exceptions.ClusterNotFoundException as e:
@@ -239,23 +223,15 @@ class ECSManager:
             raise
 
     # ECSサービスのタグ情報を取得し、monitor_ecs_capacity_provider = false のタグが存在する場合は処理しない。
-    def check_ecs_service(self, cluster, service_batch):
-        """
-        Check and update capacity provider strategy for a batch of services.
-
-        Checks services for FARGATE usage and updates them to FARGATE_SPOT if necessary,
-        unless they are tagged with monitor_ecs_capacity_provider = false.
+    def check_ecs_env(self, cluster, service_batch):
+        """Check and update services to use FARGATE_SPOT.
 
         Args:
-            cluster: Name of the ECS cluster
-            service_batch: List of service names to check
+            cluster: Cluster name
+            service_batch: List of services
 
         Returns:
-            list[dict[str, str]]: List of services that were running on FARGATE
-
-        Raises:
-            InvalidParameterException: If invalid parameters are provided
-            ClientError: For AWS API related errors
+            List of updated services
         """
         try:
             response = self.ecs_client.describe_services(
@@ -277,7 +253,7 @@ class ECSManager:
                     continue
 
                 # FARGATEの重みを0に、FARGATE_SPOTの重みを1に更新する。
-                self._update_capacity_provider(cluster, service, has_fargate_chunk)
+                self.update_capacity_provider(cluster, service, has_fargate_chunk)
 
             return has_fargate_chunk
 
@@ -291,24 +267,17 @@ class ECSManager:
             raise
 
     # このModuleでmainの関数
-    def update_capacity_provider(
+    def main_ecs_processing(
         self, ecs_cluster: list[str], ecs_service: list[str]
-    ) -> list[dict[str, Any]]:
-        """
-        Check and update capacity provider strategy for all specified services.
-
-        This is the main method that orchestrates the checking and updating of
-        capacity provider strategies across multiple clusters and services.
+    ) -> list[dict[str, str]]:
+        """Process ECS services across multiple clusters.
 
         Args:
-            ecs_cluster: List of cluster names to check
-            ecs_service: List of service names to check
+            ecs_cluster: List of clusters
+            ecs_service: List of services
 
         Returns:
-            list[dict[str, Any]]: List of services that were running on FARGATE
-
-        Raises:
-            ClientError: If an error occurs during the operation
+            List of services running on FARGATE
         """
         try:
             has_fargate_services = []
@@ -317,7 +286,7 @@ class ECSManager:
 
                 for service_batch in service_batches:
                     has_fargate_services.extend(
-                        self.check_ecs_service(cluster, service_batch)
+                        self.check_ecs_env(cluster, service_batch)
                     )
 
             return has_fargate_services
