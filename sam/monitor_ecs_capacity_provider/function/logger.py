@@ -1,9 +1,9 @@
 """This module sets up the logger."""
 
-from logging import INFO, Formatter, StreamHandler, getLogger
+from logging import DEBUG, INFO, Formatter, StreamHandler, getLogger
 
 logger = getLogger(__name__)
-logger.setLevel(INFO)
+logger.setLevel(DEBUG)
 formatter = Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
 # Standard output handler
