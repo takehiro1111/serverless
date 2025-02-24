@@ -13,7 +13,7 @@ from setting import ACCOUNTS, IAM_ROLE_NAME_MONITOR_ECS, day_format
 from slack_notify import SlackNotify
 
 
-def process_account(account: dict) -> list:
+def process_account(account: dict) -> Any:
     """Process ECS operations for a single AWS account.
 
     Args:
@@ -32,7 +32,7 @@ def process_account(account: dict) -> list:
     return main_processing
 
 
-def collect_fargate_services(accounts: list) -> list:
+def collect_fargate_services(accounts: list) -> list[dict[str, Any]]:
     """Collect FARGATE service information from all AWS accounts.
 
     Args:
@@ -56,6 +56,22 @@ def collect_fargate_services(accounts: list) -> list:
     return fargate_services
 
 
+def get_fargate_service_name(
+    fargate_services_list: list[dict[str, Any]],
+) -> list[str]:
+    """Log the FARGATE services detected in the ECS clusters.
+
+    Args:
+        fargate_services: List of FARGATE services grouped by account
+    """
+    ecs_service_name = []
+    for ecs_service in fargate_services_list:
+        for service in ecs_service["ecs_service"]:
+            ecs_service_name.append(service["service"])
+
+    return ecs_service_name
+
+
 def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
     """Check and update ECS Capacity Provider Strategy.
 
@@ -74,6 +90,8 @@ def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         slack_notifier = SlackNotify(day_format, fargate_services)
         if fargate_services:
             slack_notifier.monitor_result_slack_notification()
+            service_names = get_fargate_service_name(fargate_services)
+            logger.info(f"fargate_services has been detected: {service_names}")
         else:
             logger.info("All ECS services are running on FARGATE_SPOT successfully.")
 
