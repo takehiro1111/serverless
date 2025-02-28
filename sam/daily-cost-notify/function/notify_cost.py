@@ -5,7 +5,7 @@ import boto3
 from slack_notify import send_slack_notification
 
 
-def get_costs():
+def get_costs() -> float:
     client = boto3.client("ce", region_name="us-east-1")
 
     # 現在の日時（UTC）
@@ -20,18 +20,19 @@ def get_costs():
     # Cost Explorer APIの呼び出し
     response = client.get_cost_and_usage(
         TimePeriod={"Start": start_date, "End": end_date},
-        Granularity="DAILY",
-        Metrics=["UnbendedCost"],
+        Granularity="MONTHLY",
+        Metrics=["UnblendedCost"],
     )
 
-    # コストデータの取得
-    # 月初からの合計コストを計算
-    total_cost = 0
-    for result in response["ResultsByTime"]:
-        daily_cost = float(result["Total"]["UnbendedCost"]["Amount"])
-        total_cost += daily_cost
+    monthly_cost = abs(
+        float(response["ResultsByTime"][0]["Total"]["UnblendedCost"]["Amount"])
+    )
+    # 科学表記法の文字列に変換して解析(eをsplitで区切りたいため。)
+    monthly_cost_e = f"{monthly_cost:e}"
+    num, char = monthly_cost_e.split("e")
+    # print(f"{float(num):.2f}")
 
-    return total_cost
+    return float(num)
 
 
 def lambda_handler(event, context):
