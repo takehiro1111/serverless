@@ -32,7 +32,7 @@ def get_costs() -> float:
     num, char = monthly_cost_e.split("e")
     # print(f"{float(num):.2f}")
 
-    return f"{float(num):.2f}"
+    return float(num)
 
 
 def lambda_handler(event, context):
