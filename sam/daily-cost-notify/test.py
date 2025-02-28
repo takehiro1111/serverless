@@ -1,11 +1,21 @@
-import json
+# num = abs(float(("-5.252200000000001e-06")))
+
+# # 科学表記法の文字列に変換して解析
+# num_str = f"{num:e}"
+# print(num_str)
+# mantissa, exponent = num_str.split('e')
+
+# # 仮数部だけを浮動小数点数として取得
+# mantissa_value = float(mantissa)
+
+# print(f"{mantissa_value:.2f}")
+import pprint
 from datetime import datetime, timezone
 
 import boto3
-from slack_notify import send_slack_notification
 
 
-def get_costs() -> float:
+def get_costs():
     client = boto3.client("ce", region_name="us-east-1")
 
     # 現在の日時（UTC）
@@ -30,17 +40,20 @@ def get_costs() -> float:
     # 科学表記法の文字列に変換して解析(eをsplitで区切りたいため。)
     monthly_cost_e = f"{monthly_cost:e}"
     num, char = monthly_cost_e.split("e")
-    # print(f"{float(num):.2f}")
+    print(f"{float(num):.2f}")
+
+    # コストデータの取得
+    # 月初からの合計コストを計算
+    # for result in response["ResultsByTime"]:
+    #     # print(f"response[\"ResultsByTime\"]:{response["ResultsByTime"]}")
+    #     daily_cost = abs(float((result["Total"]["UnblendedCost"]["Amount"])))
+
+    #     # 科学表記法の文字列に変換して解析(eをsplitで区切りたいため。)
+    #     daily_cost_e = f"{daily_cost:e}"
+    #     num, char = daily_cost_e.split("e")
+    #     total_cost += float(num)
 
     return f"{float(num):.2f}"
 
 
-def lambda_handler(event, context):
-    # コストを取得してSlackに通知
-    cost = get_costs()
-    send_slack_notification(cost)
-
-    return {
-        "statusCode": 200,
-        "body": json.dumps(f"Success Notify Cost Status: {cost}"),
-    }
+cost = get_costs()
