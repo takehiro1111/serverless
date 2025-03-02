@@ -1,0 +1,116 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Monitor Lambda
+
+Parameters:
+  Env:
+    Type: String
+
+Globals:
+  Function:
+    CodeUri: ../../function/
+    Runtime: python3.12
+    Architectures:
+        - arm64
+    LoggingConfig:
+      LogFormat: JSON
+    Environment:
+        Variables:
+          ACCOUNT_ID: !Ref AWS::AccountId
+          FUNCTION_ARN:
+          DEFAULT_REGION: !Ref AWS::Region
+
+
+Resources:
+###########################################################
+# Lambda
+###########################################################
+  AddMonitorLambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: add-monitor-lambda-resources
+      Handler: handler.lambda_habdler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      MemorySize: 256
+      Timeout: 600
+      Environment:
+        Variables:
+          DEFAULT_REGION: !Ref AWS::Region
+          SSM_PARAMETER_NAME: !GetAtt SlackWebhookParameter.Name
+
+###########################################################
+# CloudWatch Logs
+###########################################################
+  MonitorECSCapacityProviderLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${AddMonitorLambdaFunction}
+      RetentionInDays: 14
+
+##########################################################
+# SSM ParameterStore
+##########################################################
+  SlackWebhookParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /serverless/monitor-ecs-capaciry-provider/SLACK_WEBHOOK_URL
+      Type: String # CloudFromationでは、SecureStringがサポートされていないため。
+      Value: '画面上で設定する'
+
+##########################################################
+# IAM
+##########################################################
+  LambdaExecutionRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: monitor-ecs-lambda-execution-role
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service: lambda.amazonaws.com
+              Action: sts:AssumeRole
+
+        Policies:
+          - PolicyName: logs_policy
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - logs:CreateLogGroup
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                  Resource: !Sub 'arn:aws:logs:${DEFAULT_REGION}:${AWS::AccountId}:log-group:*:*'
+
+          - PolicyName: ssm_policy
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - ssm:GetParameter
+                  Resource: !Sub 'arn:aws:ssm:${DEFAULT_REGION}:${AWS::AccountId}:*'
+
+          - PolicyName: add_cloudwatch_logs_subscription_filter
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - logs:PutSubscriptionFilter
+                    - logs:DeleteSubscriptionFilter
+                    - logs:DescribeSubscriptionFilters
+                  Resource: !Sub 'arn:aws:logs:${DEFAULT_REGION}:${AWS::AccountId}:log-group:*:*'
+
+          - PolicyName: add_cloudwatch_logs_subscription_filter
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - cloudwatch:PutMetricAlarm
+                    - cloudwatch:DescribeAlarms
+                    - cloudwatch:DeleteAlarms
+                  Resource: !Sub 'arn:aws:cloudwatch:${DEFAULT_REGION}:${AWS::AccountId}:alarm:*'
