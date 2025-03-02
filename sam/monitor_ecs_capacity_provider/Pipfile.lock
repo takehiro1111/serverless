@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "9261ff47f4dbe5b34e4baeb388e9df310847a04e9f2144567310730c6290fb6c"
+            "sha256": "09c36d83178963ca2ea6a9035ab51aa4eac84483a10dcabbb591e777b514a6bb"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -33,6 +33,15 @@
             ],
             "markers": "python_version >= '3.8'",
             "version": "==1.36.25"
+        },
+        "holidays": {
+            "hashes": [
+                "sha256:174b64b9c23ef97600b32f4c44d4cf685223d75188dd746bce185fcbcdfd0522",
+                "sha256:d9a21be2c01e68f28bae1544a36736566830b065f467b59bca32caefb4c4487f"
+            ],
+            "index": "pypi",
+            "markers": "python_version >= '3.9'",
+            "version": "==0.67"
         },
         "jmespath": {
             "hashes": [

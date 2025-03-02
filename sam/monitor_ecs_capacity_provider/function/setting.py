@@ -3,6 +3,7 @@
 import datetime
 import os
 
+import holidays
 import yaml
 
 # config
@@ -18,6 +19,12 @@ DEFAULT_REGION = os.environ.get("AWS_REGION")
 SSM_PARAMETER_NAME = os.environ.get("SSM_PARAMETER_NAME")
 
 # Get date for slack notification
-day = datetime.datetime.now()
-weekday = day.strftime("%a")
-day_format = day.strftime("%Y/%-m/%-d") + f"({weekday})"
+today = datetime.datetime.now()
+weekday = today.strftime("%a")
+day_format = today.strftime("%Y/%-m/%-d") + f"({weekday})"
+
+# 日本の祝日カレンダーを作成
+jp_holidays = holidays.Japan()
+
+# 特定の日が祝日かどうかを判定
+is_holiday = datetime.date(today.year, today.month, today.day) in jp_holidays

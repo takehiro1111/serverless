@@ -9,7 +9,7 @@ from typing import Any
 
 from logger import logger
 from manage_ecs import ECSManager
-from setting import ACCOUNTS, IAM_ROLE_NAME_MONITOR_ECS, day_format
+from setting import ACCOUNTS, IAM_ROLE_NAME_MONITOR_ECS, day_format, is_holiday
 from slack_notify import SlackNotify
 
 
@@ -72,7 +72,7 @@ def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
 
         # Slack通知の処理
         slack_notifier = SlackNotify(day_format, fargate_services)
-        if fargate_services:
+        if fargate_services and not is_holiday:
             slack_notifier.monitor_result_slack_notification()
         else:
             logger.info("All ECS services are running on FARGATE_SPOT successfully.")
@@ -83,7 +83,8 @@ def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         }
 
     except Exception as e:
-        slack_notifier.error_result_slack_notification()
+        if not is_holiday:
+            slack_notifier.error_result_slack_notification()
         logger.error(f"handler occured error: {e}", exc_info=True)
         return {
             "statusCode": 500,
