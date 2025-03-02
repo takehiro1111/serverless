@@ -22,3 +22,21 @@
 # print(all_rules)
 
 # rule['ecs_service'] = [{'cluster': ['cluster-web'], 'service': 'nginx-service-stg'}]
+
+import datetime
+from pprint import pprint
+
+import holidays
+
+# 日本の祝日カレンダーを作成
+jp_holidays = holidays.Japan()
+
+# Get date for slack notification
+day = datetime.datetime.now()
+
+# 特定の日が祝日かどうかを判定
+is_holiday = datetime.date(day.year, day.month, day.day) in jp_holidays
+
+if __name__ == "__main__":
+    pprint(is_holiday)
+    # pprint(jp_holidays)
