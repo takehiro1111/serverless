@@ -1,0 +1,107 @@
+service: sls-monitor-lambda
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.9
+  region: ap-northeast-1
+  timeout: 3
+  tracing:
+    lambda: true
+  logRetentionInDays: 1827
+  logs:
+    format: json
+
+custom:
+  SNSTopicArn: arn:aws:sns:ap-northeast-1:237297816100:CloudwatchAlertNotification
+  CwLogsDestinationArn: arn:aws:logs:ap-northeast-1:718189387855:destination:lambda_error_destination
+  IAMRoleArn: arn:aws:iam::237297816100:role/ennavi-lambda
+
+functions:
+  ExampleLambdaFunction:
+    name: example-function-name-new
+    handler: handler.hello
+    timeout: 10
+    memorySize: 128
+    role: ${self:custom.IAMRoleArn}
+    events:
+      - httpApi:
+          path: /
+          method: get
+
+resources:
+  Resources:
+    ##############################################################
+    # Cloudwatch Alarm
+    ##############################################################
+    AlarmFunction1Errors:
+      Type: AWS::CloudWatch::Alarm
+      DependsOn:
+        - MySimpleTopic  # Lambda関数への依存関係
+      Properties:
+        ActionsEnabled: true
+        AlarmName: ${self:functions.ExampleLambdaFunction.name}
+        AlarmDescription: "Lambda error metric: Failed GreaterThanOrEqualToThreshold 1"
+        AlarmActions:
+          - ${self:custom.SNSTopicArn}
+          - !GetAtt MySimpleTopic.TopicArn
+        ComparisonOperator: GreaterThanOrEqualToThreshold
+        Dimensions:
+          - Name: FunctionName
+            Value: ${self:functions.ExampleLambdaFunction.name}
+        EvaluationPeriods: 1
+        DatapointsToAlarm: 1
+        Statistic: Average
+        Period: 300
+        Threshold: 1
+        MetricName: Errors
+        Namespace: AWS/Lambda
+        TreatMissingData: notBreaching
+
+    ##############################################################
+    # Cloudwatch Logs SubscriptionFilter
+    ##############################################################
+    ExampleLogGroupSubscription:
+      Type: AWS::Logs::SubscriptionFilter
+      DependsOn:
+        - ExampleLambdaFunctionLambdaFunction  # Lambda関数への依存関係
+      Properties:
+        LogGroupName: /aws/lambda/${self:functions.ExampleLambdaFunction.name}
+        FilterName: subscription-filter-${self:functions.ExampleLambdaFunction.name}
+        FilterPattern: '?ERROR ?Exception'
+        DestinationArn: ${self:custom.CwLogsDestinationArn}
+        Distribution: ByLogStream
+
+    ##############################################################
+    # SNSトピック
+    ##############################################################
+    MySimpleTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: my-simple-topic-new
+
+    # ##############################################################
+    # # IAM Role
+    # ##############################################################
+    # LambdaExecutionRole:
+    #   Type: AWS::IAM::Role
+    #   Properties:
+    #     RoleName: example-role-name-new
+    #     AssumeRolePolicyDocument:
+    #       Version: '2012-10-17'
+    #       Statement:
+    #         - Effect: Allow
+    #           Principal:
+    #             Service: lambda.amazonaws.com
+    #           Action: sts:AssumeRole
+    #     Policies:
+    #       - PolicyName: logs_policy
+    #         PolicyDocument:
+    #           Version: '2012-10-17'
+    #           Statement:
+    #             - Effect: Allow
+    #               Action:
+    #                 - logs:CreateLogGroup
+    #                 - logs:CreateLogStream
+    #                 - logs:PutLogEvents
+    #               Resource: 'arn:aws:logs:ap-northeast-1:*:log-group:*:*'
