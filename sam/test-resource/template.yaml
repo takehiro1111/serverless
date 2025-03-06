@@ -1,0 +1,117 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  test-resource
+
+  Sample SAM Template for test-resource
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 3
+
+    Tracing: Active
+    LoggingConfig:
+      LogFormat: JSON
+
+# 既存のSNSに結びつける場合
+Parameters:
+  SNSTopicArn:
+    Type: String
+    Default: arn:aws:sns:ap-northeast-1:237297816100:CloudwatchAlertNotification
+  CwLogsDestinationArn:
+    Type: String
+    Default: arn:aws:logs:ap-northeast-1:718189387855:destination:lambda_error_destination
+Resources:
+  ##############################################################
+  # Cloudwatch Alarm
+  ##############################################################
+  AlarmFunction1Errors:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ActionsEnabled: true
+      AlarmName: !Ref ExampleLambdaFunction
+      AlarmDescription: "Lambda error metric: Failed  GreaterThanOrEqualToThreshold 1"
+      AlarmActions:
+        - !Ref SNSTopicArn # アラーム発生時のアクション
+        - !GetAtt MySimpleTopic.TopicArn
+      ComparisonOperator: GreaterThanOrEqualToThreshold # 閾値以上
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref ExampleLambdaFunction
+      EvaluationPeriods: 1  # 閾値を超えた回数
+      DatapointsToAlarm: 1  # データポイント数
+      Statistic: Average  # 最大
+      Period: 300  # 期間[s]
+      Threshold: 1  # 閾値
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      TreatMissingData: notBreaching  # データがない場合の扱い
+
+  ##############################################################
+  # Cloudwatch Logs LogGroup
+  ##############################################################
+  ExampleLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: !Sub /aws/lambda/${ExampleLambdaFunction}
+        RetentionInDays: 1827 # 5年
+
+  ##############################################################
+  # Cloudwatch Logs SubscriptionFilter
+  ##############################################################
+  ExampleLogGroupSubscription:
+    Type: AWS::Logs::SubscriptionFilter
+    Properties:
+      LogGroupName: !Ref ExampleLogGroup
+      FilterName: !Ref ExampleLogGroup
+      FilterPattern: '?ERROR ?Exception'
+      DestinationArn: !Ref CwLogsDestinationArn
+      Distribution: ByLogStream
+
+  ##############################################################
+  # SNSトピック
+  ##############################################################
+  MySimpleTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: my-simple-topic
+
+
+  ##############################################################
+  # 以下は関連リソース
+  ##############################################################
+  ExampleLambdaFunction:
+        Type: AWS::Serverless::Function
+        Properties:
+          FunctionName: example-function-name
+          Handler: app.lambdaHandler
+          CodeUri: hello-world/
+          Runtime: nodejs18.x
+          Timeout: 10
+          MemorySize: 128
+          Role: !GetAtt LambdaExecutionRole.Arn
+
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: example-role-name
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+
+      Policies:
+        - PolicyName: logs_policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: 'arn:aws:logs:ap-northeast-1:*:log-group:*:*'

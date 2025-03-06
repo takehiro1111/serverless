@@ -1,0 +1,149 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Transform": "AWS::Serverless-2016-10-31",
+  "Description": "test-resource\n\nSample SAM Template for test-resource",
+  "Globals": {
+    "Function": {
+      "Timeout": 3,
+      "Tracing": "Active",
+      "LoggingConfig": {
+        "LogFormat": "JSON"
+      }
+    }
+  },
+  "Parameters": {
+    "SNSTopicArn": {
+      "Type": "String",
+      "Default": "arn:aws:sns:ap-northeast-1:237297816100:CloudwatchAlertNotification"
+    },
+    "CwLogsDestinationArn": {
+      "Type": "String",
+      "Default": "arn:aws:logs:ap-northeast-1:718189387855:destination:lambda_error_destination"
+    }
+  },
+  "Resources": {
+    "AlarmFunction1Errors": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "ActionsEnabled": true,
+        "AlarmName": {
+          "Ref": "ExampleLambdaFunction"
+        },
+        "AlarmDescription": "Lambda error metric: Failed  GreaterThanOrEqualToThreshold 1",
+        "AlarmActions": [
+          {
+            "Ref": "SNSTopicArn"
+          },
+          {
+            "Fn::GetAtt": [
+              "MySimpleTopic",
+              "TopicArn"
+            ]
+          }
+        ],
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "Dimensions": [
+          {
+            "Name": "FunctionName",
+            "Value": {
+              "Ref": "ExampleLambdaFunction"
+            }
+          }
+        ],
+        "EvaluationPeriods": 1,
+        "DatapointsToAlarm": 1,
+        "Statistic": "Average",
+        "Period": 300,
+        "Threshold": 1,
+        "MetricName": "Errors",
+        "Namespace": "AWS/Lambda",
+        "TreatMissingData": "notBreaching"
+      }
+    },
+    "ExampleLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": {
+          "Fn::Sub": "/aws/lambda/${ExampleLambdaFunction}"
+        },
+        "RetentionInDays": 1827
+      }
+    },
+    "ExampleLogGroupSubscription": {
+      "Type": "AWS::Logs::SubscriptionFilter",
+      "Properties": {
+        "LogGroupName": {
+          "Ref": "ExampleLogGroup"
+        },
+        "FilterName": {
+          "Ref": "ExampleLogGroup"
+        },
+        "FilterPattern": "?ERROR ?Exception",
+        "DestinationArn": {
+          "Ref": "CwLogsDestinationArn"
+        },
+        "Distribution": "ByLogStream"
+      }
+    },
+    "MySimpleTopic": {
+      "Type": "AWS::SNS::Topic",
+      "Properties": {
+        "TopicName": "my-simple-topic"
+      }
+    },
+    "ExampleLambdaFunction": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "FunctionName": "example-function-name",
+        "Handler": "app.lambdaHandler",
+        "CodeUri": "hello-world/",
+        "Runtime": "nodejs18.x",
+        "Timeout": 10,
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "LambdaExecutionRole",
+            "Arn"
+          ]
+        }
+      }
+    },
+    "LambdaExecutionRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": "example-role-name",
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "logs_policy",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents"
+                  ],
+                  "Resource": "arn:aws:logs:ap-northeast-1:*:log-group:*:*"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  }
+}
