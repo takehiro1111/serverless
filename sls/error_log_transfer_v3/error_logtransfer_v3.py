@@ -5,7 +5,7 @@ import re
 import boto3
 import logger
 from logger import logger
-from setting import ERROR_MESG, notification_setting_diff_msg
+from setting import notification_setting_diff_msg, notification_setting_empty_msg
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 
@@ -46,9 +46,9 @@ def process_logs(src, body):
     else:
         logger.info("srcにマッチするデータが存在しません。DynamoDBを確認してください。")
         # そもそもDynamoDBにsrcが存在しない場合の検知用通知のチャンネルIDは別で持つ必要がある。
-        notify_slack_diff_dynamo_key(
-            "C02PY437UM6", ERROR_MESG["empty_notification_settings"]
-        )
+        # チャンネルIDは変数化する。(03-stg-sre)
+        dynamodb_empty_mesg = notification_setting_empty_msg(src)
+        notify_slack_template("C02PY437UM6", dynamodb_empty_mesg)
         return
 
     notification_settings = item.get("notification_setting", [])
@@ -60,7 +60,7 @@ def process_logs(src, body):
 
     # notification_settingのlist[dict]からkeyを取得。
     for notification_setting in notification_settings:
-        key = list(notification_setting.keys())[0]
+        dynamodb_key = list(notification_setting.keys())[0]
 
     print("notification_settings:", notification_settings)
 
@@ -74,13 +74,6 @@ def process_logs(src, body):
             print("container_name:", container_name)
         except json.JSONDecodeError:
             continue  # JSON形式でない場合は次の行へ
-
-        # notification_settingsが空の場合はそれ用の通知し、次のループに遷移する。
-        if check_empty_notification_settings(notification_settings):
-            notify_slack_diff_dynamo_key(
-                channel_id, ERROR_MESG["empty_notification_settings"]
-            )
-            continue
 
         check_notification_setting = check_notification_conditions(
             json_data, notification_settings
@@ -96,8 +89,8 @@ def process_logs(src, body):
                     logger.info("SlackチャンネルIDが見つかりません。")
         elif check_notification_setting is False:
             if channel_id and diff_key_notified is False:
-                dynamo_key_diff_msg = notification_setting_diff_msg(src, key)
-                notify_slack_diff_dynamo_key(channel_id, dynamo_key_diff_msg)
+                dynamo_key_diff_msg = notification_setting_diff_msg(src, dynamodb_key)
+                notify_slack_template(channel_id, dynamo_key_diff_msg)
                 # ループの影響で通知が重複しないようにする。
                 diff_key_notified = True
             else:
@@ -118,7 +111,7 @@ def get_slack_bot_token():
     return SLACK_BOT_TOKEN
 
 
-def notify_slack_diff_dynamo_key(channel_id, text):
+def notify_slack_template(channel_id, text):
     # Slack接続
     client = WebClient(token=get_slack_bot_token())
     try:
@@ -140,15 +133,6 @@ def notify_slack_diff_dynamo_key(channel_id, text):
 
 
 # notification_settings: [{'level': 'error'}]
-
-
-# そもそも設定漏れがないか確認。
-def check_empty_notification_settings(notification_settings):
-    if not notification_settings:
-        logger.info(ERROR_MESG["empty_notification_settings"])
-        return True
-    else:
-        return False
 
 
 # DYnamoDBのnotification_settingのkeyが一致するか確認。

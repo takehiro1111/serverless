@@ -1,7 +1,6 @@
-ERROR_MESG = {
-    "empty_notification_settings": "`notification_setting`が空です。DynamoDBにItemを設定してください。",
-}
+def notification_setting_diff_msg(src, dynamodb_key):
+    return f"`{src}`: DynamoDBのKey(`{dynamodb_key}`)がアプリケーションログと一致しません。\n設定を見直してください。"
 
 
-def notification_setting_diff_msg(src, key):
-    return f"`{src}`: DynamoDBのKeyがアプリケーションログ(`{key}`)と一致しません。"
+def notification_setting_empty_msg(src):
+    return f"`{src}`: インフラの設定漏れです。DynamoDBにItemを設定してください。"
