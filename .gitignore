@@ -10,4 +10,4 @@ tutorial/**/include
 **/.DS_Store/**
 **/**.drawio
 **/**.png
-
+**/**.pem
