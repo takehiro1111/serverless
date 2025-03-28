@@ -52,9 +52,9 @@ def process_logs(src, body):
     else:
         logger.info("srcにマッチするデータが存在しません。DynamoDBを確認してください。")
         # そもそもDynamoDBにsrcが存在しない場合の検知用通知のチャンネルIDは別で持つ必要がある。
-        # チャンネルIDは変数化する。(03-stg-sre)
+        # チャンネルIDは変数化する
         dynamodb_empty_mesg = notification_setting_empty_msg(src)
-        notify_slack_template("C02PY437UM6", dynamodb_empty_mesg)
+        notify_slack_template("", dynamodb_empty_mesg)
         return
 
     notification_settings = item.get("notification_setting", [])
