@@ -15,11 +15,17 @@ def lambda_handler(event, context):
         s3_info = data["s3"]
         bucket = s3_info["bucket"]["name"]
         key = s3_info["object"]["key"]
+        print("key:", key)
 
         src = key.split("/")[0]
+        print("src:", src)
         directory = key.split("/")[1]
+        print("directory:", directory)
+
         if directory in ["errors", "error", "manifests"]:
             continue
+        elif "event-log" in src:
+            break
         else:
             body = get_s3_data(bucket, key)
             process_logs(src, body)
