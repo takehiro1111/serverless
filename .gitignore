@@ -12,3 +12,4 @@ tutorial/**/include
 **/**.png
 **/**.pem
 **/test_text/**
+**/text/**

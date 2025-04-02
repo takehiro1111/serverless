@@ -4,8 +4,8 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-slack-sdk = "*"
 boto3 = "*"
+slack-sdk = "*"
 
 [dev-packages]
 

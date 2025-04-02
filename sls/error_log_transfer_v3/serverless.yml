@@ -33,11 +33,12 @@ package:
     - '!test/**'
     - '!package-lock.json'
     - '!package.json'
+    - 'functions/**/*.py'
 
 
 functions:
   notify:
-    handler: error_logtransfer_v3.lambda_handler
+    handler: functions/lambda_handler.lambda_handler
     name: ${self:custom.prefix.${self:provider.stage}}errorLogtransfer_v3
 
 plugins:
