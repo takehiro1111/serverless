@@ -6,27 +6,10 @@ import boto3
 from .logger import logger
 from .notify_slack import NotifySlackManager
 from .setting import (
-    PROD_SRE_LAMBDA,
+    SLACK_CHANNEL_ID_SRE_LAMBDA,
     notification_setting_diff_msg,
     notification_setting_empty_msg,
 )
-
-# item: {'blacklist': ['INFO'], 'src': 'test-error-logtransfer',
-#         'notification_setting': [{'level': 'error'}], 'channel_id': 'C02PY437UM6'}
-
-# json_data: {
-#             '@timestamp': '2025-03-27T10:50:34.548+09:00', 'log': 'WARN', 'message': 'Not found: /favicon.ico',
-#             'timestamp': '2025-03-27T10:50:34.548+09:00', 'type': 'applog',
-#             'url': 'https://stg.student.hoikushibank.com/favicon.ico',
-#             'userAgent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) '
-#             'Chrome/123.0.0.0 Safari/537.36', 'source': 'stdout', 'container_id': '7a925a6dfb5d42b6b9ea9243e05a80ec-0813150757',
-#             'container_name': 'hb-stu-v2-web-stg', 'ecs_cluster': 'hb-stu-stg',
-#             'ecs_task_arn': 'arn:aws:ecs:ap-northeast-1:749918949857:task/hb-stu-stg/7a925a6dfb5d42b6b9ea9243e05a80ec',
-#             'ecs_task_definition': 'hb-stu-v2-web-stg:184'
-#           }
-
-
-# notification_settings: [{'level': 'error'}]
 
 
 class LogParser:
@@ -37,6 +20,8 @@ class LogParser:
         self.diff_key_flag = False
         self.empty_item_flag = False
         self.notification_setting_key = None
+        self._conteinr_name = None
+        self.processed_messages = set()
 
     # DynamoDBテーブル側の情報を取得
     def get_dynamodb_item(self, src):
@@ -53,14 +38,15 @@ class LogParser:
             )
             if self.empty_item_flag == False:
                 dynamodb_empty_msg = notification_setting_empty_msg(src)
-                self.notify_slack_manager.notify_slack_template(
-                    PROD_SRE_LAMBDA, dynamodb_empty_msg
+                self.notify_slack_manager.notify_slack_infra_mistakes(
+                    SLACK_CHANNEL_ID_SRE_LAMBDA, dynamodb_empty_msg
                 )
+                # DynamoDBが空の場合の通知は1回のみにしたいためのフラグ処理。
                 self.empty_item_flag = True
             return None
 
     # DynamoDBの`notification_setting`のkey情報を取得
-    def get_notification_setting_key(self, notification_settings):
+    def _get_notification_setting_key(self, notification_settings):
         if not notification_settings:
             logger.warning("notification_settingsのリストが空です")
             return None
@@ -78,7 +64,7 @@ class LogParser:
         channel_id = self.item.get("channel_id")
 
         # notification_settingのlist[dict]からkeyを取得。
-        self.get_notification_setting_key(notification_settings)
+        self._get_notification_setting_key(notification_settings)
 
         for line in body:
             try:
@@ -87,13 +73,29 @@ class LogParser:
                 json_data = json.loads(line)
                 print("json_data:", json_data)
                 container_name = json_data.get("container_name", "")
+                self._conteinr_name = container_name
                 print("container_name:", container_name)
+
+                message = json_data.get("message", "")
+                timestamp = json_data.get("timestamp", json_data.get("@timestamp", ""))
+                message_key = f"{message}_{timestamp}"
+
+                # 重複しないよう、同一のTimeStampとMessageで既に処理したメッセージならスキップ
+                if message_key in self.processed_messages:
+                    continue
+
+                self.processed_messages.add(message_key)
+
             except json.JSONDecodeError:
                 continue  # JSON形式でない場合は次の行へ
 
             # ログのバリデーション処理
             validator = LogValidation(
-                json_data, notification_settings, blacklist_regexp, channel_id
+                json_data,
+                notification_settings,
+                blacklist_regexp,
+                channel_id,
+                self.notify_slack_manager,
             )
             result_flag = validator.validate_log_and_notify(
                 container_name, self.diff_key_flag, src, self.notification_setting_key
@@ -116,7 +118,7 @@ class BaseValidation:
         for setting in self.notification_settings:
             for key, value in setting.items():
                 # ログの重要度を示す値のキーがDynamoDBで設定しているキーと一致しているか
-                ##簡略化できないか要確認。
+                # 簡略化できないか要確認。
                 if key in self.json_data.keys():
                     has_key = key.lower() in (k.lower() for k in self.json_data)
                     has_value = value.lower() in self.json_data[key].lower()
@@ -142,34 +144,44 @@ class BaseValidation:
 
 
 class LogValidation(BaseValidation):
-    def __init__(self, json_data, notification_settings, blacklist_regexp, channel_id):
+    def __init__(
+        self,
+        json_data,
+        notification_settings,
+        blacklist_regexp,
+        channel_id,
+        notify_slack_manager,
+    ):
         super().__init__(json_data, notification_settings, blacklist_regexp, channel_id)
-        self.notify_slack_manager = NotifySlackManager()
+        self.notify_slack_manager = notify_slack_manager
 
     def validate_log_and_notify(self, container_name, diff_key_flag, src, dynamodb_key):
         check_notification_setting = self.check_notification_settings()
         print(f"※※チャンネルIDが見つからないと警告される件:{self.channel_id}")
         print(f"diff_key_flagの中身:{diff_key_flag}")
 
-        if check_notification_setting:
+        if check_notification_setting and self.json_data.get("message"):
             if not self.check_blacklisted():
                 if self.channel_id:
-                    self.notify_slack_manager.respond_to_slack(
-                        self.channel_id, self.json_data, self.notification_settings
+                    self.notify_slack_manager.notify_slack_app_err_msg(
+                        container_name,
+                        self.channel_id,
+                        self.json_data,
+                        self.notification_settings,
                     )
                 else:
-                    logger.error("SlackチャンネルIDが見つかりません。(True)")
-        elif check_notification_setting is False:
+                    logger.info("SlackチャンネルIDが見つかりません。(True)")
+        elif check_notification_setting is False and self.json_data.get("message"):
             if self.channel_id and diff_key_flag is False:
                 dynamo_key_diff_msg = notification_setting_diff_msg(src, dynamodb_key)
-                self.notify_slack_manager.notify_slack_template(
+                self.notify_slack_manager.notify_slack_infra_mistakes(
                     self.channel_id, dynamo_key_diff_msg
                 )
                 # ループの影響で通知が重複しないようにする。
                 return True
             else:
-                logger.error("SlackチャンネルIDが見つかりません。(False)")
+                logger.info("SlackチャンネルIDが見つかりません。(False)")
         else:
-            logger.info("エラーではないログです。")
+            logger.info("エラーではないログデータです。")
 
         return None

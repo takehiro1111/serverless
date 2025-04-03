@@ -39,6 +39,7 @@ package:
 functions:
   notify:
     handler: functions/lambda_handler.lambda_handler
+    # handler: prod/prod.lambda_handler
     name: ${self:custom.prefix.${self:provider.stage}}errorLogtransfer_v3
 
 plugins:

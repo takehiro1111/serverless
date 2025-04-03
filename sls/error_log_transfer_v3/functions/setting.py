@@ -7,4 +7,5 @@ def notification_setting_empty_msg(src):
 
 
 ERRORS: list[str] = ["errors", "error", "manifests"]
-PROD_SRE_LAMBDA = "C07EFGAE81J"  # 03-prod-sre-lambda
+SLACK_CHANNEL_ID_SRE_LAMBDA = "C07EFGAE81J"  # 03-prod-sre-lambda
+TITLE_COLOR_CODE = "FFC859"
