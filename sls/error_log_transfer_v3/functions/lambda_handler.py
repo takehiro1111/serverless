@@ -41,5 +41,6 @@ def lambda_handler(event, context):
 
             # S3オブジェクトと一致するDynamoDBのデータを取得
             log_parser.get_dynamodb_item(src)
+            
             # アプリケーションログとDynamoDBの情報を付け合わせして処理。
             log_parser.parse_application_log(src, body)
