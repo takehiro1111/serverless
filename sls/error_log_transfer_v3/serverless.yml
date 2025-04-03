@@ -1,0 +1,47 @@
+service: errorLogtransfer-v3
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  region: ap-northeast-1
+  runtime: python3.12
+  stage: ${opt:stage, self:custom.defaultStage}
+  environment:
+    stage: ${opt:stage, self:custom.defaultStage}
+
+  iam:
+    role: "arn:aws:iam::650251692423:role/lambda-transfer-error-log"
+
+custom:
+  defaultStage: stg
+  stages:
+    - prod
+    - stg
+  prefix:
+    prod: "prod_"
+    stg: "stg_"
+  s3bucket:
+    prod: "prod-fluentd-log-test"
+    stg: "stg-fluentd-log-test"
+
+package:
+  patterns:
+    - '!node_modules/**'
+    - '!Pipfile*'
+    - '!README*'
+    - '!test/**'
+    - '!package-lock.json'
+    - '!package.json'
+    - 'functions/**/*.py'
+
+
+functions:
+  notify:
+    handler: functions/lambda_handler.lambda_handler
+    # handler: prod/prod.lambda_handler
+    name: ${self:custom.prefix.${self:provider.stage}}errorLogtransfer_v3
+
+plugins:
+  - serverless-offline
+  - serverless-python-requirements
