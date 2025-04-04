@@ -1,6 +1,6 @@
-"""This module sets up the logger."""
+"""ロガーオブジェクトの作成."""
 
-from logging import DEBUG, INFO, Formatter, StreamHandler, getLogger
+from logging import INFO, Formatter, StreamHandler, getLogger
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)

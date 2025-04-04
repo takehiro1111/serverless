@@ -1,5 +1,12 @@
+"""Slackへの通知機能を提供するモジュール.
+
+エラーログや監視情報をSlackチャンネルに通知するための
+機能を実装している.
+"""
+
 import json
 import os
+from typing import Any, Optional
 
 import boto3
 from slack_sdk import WebClient
@@ -10,14 +17,27 @@ from .setting import TITLE_COLOR_CODE
 
 
 class NotifySlackManager:
-    def __init__(self):
+    """Slack通知管理クラス.
+
+    エラーログや監視情報をSlackに通知するための機能を提供します.
+    """
+
+    def __init__(self) -> None:
+        """NotifySlackManagerを初期化.
+        Slackトークンを取得し、通知用のattachment変数を初期化する.
+        """
         self._token = self.slack_bot_token
-        self._attachment_main = None
-        self._attachment_detail = None
-        self._thread_message = None
+        self._attachment_main: dict[str, Any] | None = None
+        self._attachment_detai:dict[str, list[Any]] | None = {"fields": []}
+        self._thread_message: dict[str, list[Any]] = {"fields": []}
 
     @property
-    def slack_bot_token(self):
+    def slack_bot_token(self) -> str | Any:
+        """Slackボットトークンを取得す.
+
+        Returns:
+            str: 環境に対応したSlackボットトークン
+        """
         # botトークン取得
         stage = os.getenv("stage")
         ssm = boto3.client("ssm")
@@ -28,10 +48,27 @@ class NotifySlackManager:
         return SLACK_BOT_TOKEN
 
     @slack_bot_token.setter
-    def slack_bot_token(self, value):
+    def slack_bot_token(self, value: str) -> None:
+        """Slackボットトークンを設定します.
+
+        Args:
+            value: 設定するSlackボットトークン
+        """
         self._token = value
 
-    def _build_notification_attachment(self, container_name, json_data, notification_settings):
+    def _build_notification_attachment(
+            self,
+            container_name: str,
+            json_data: dict[str, Any],
+            notification_settings: list[dict[str, Any]]
+        ) -> None:
+        """Slack通知用のアタッチメントを構築するメソッド.
+
+        Args:
+            container_name: 通知に表示するコンテナ名
+            json_data: 通知するログデータ
+            notification_settings: 通知設定情報
+        """
         # アタッチメントの基本構造を作成
         self._attachment_main = {
             "color": TITLE_COLOR_CODE,
@@ -97,7 +134,17 @@ class NotifySlackManager:
         print(f"_build_notification_attachment:{self._attachment_detail["fields"]}")
 
 
-    def _add_notification_fields(self, attachment, json_data, notification_settings):
+    def _add_notification_fields(self, attachment: dict[str, Any], json_data: dict[str, Any], notification_settings:  list[dict[str, Any]]) -> set[str]:
+        """通知設定に基づいてアタッチメントにフィールドを追加する.
+
+        Args:
+            attachment: フィールドを追加するアタッチメント
+            json_data: 通知するログデータ
+            notification_settings: 通知設定情報
+
+        Returns:
+            追加されたフィールド名のSet
+        """
         # 通知設定に基づくフィールドを追加
         added_fields = set()
         for setting in notification_settings:
@@ -113,7 +160,12 @@ class NotifySlackManager:
         print(f"added_fields:{added_fields}")
         return added_fields
 
-    def _send_slack_message(self, channel_id):
+    def _send_slack_message(self, channel_id) -> None:
+        """構築されたアタッチメントをSlackチャンネルに送信する.
+
+        Args:
+            channel_id: 送信先のSlackチャンネルID
+        """
         client = WebClient(token=self._token)
         try:
             # メインメッセージを送信
@@ -126,7 +178,7 @@ class NotifySlackManager:
             thread_bodys = json.dumps([self._thread_message])
             print("thread_bodys:", thread_bodys)
 
-            # スタックトレースのデータが存在する場合のみスレッドに通知する。
+            # スタックトレースのデータが存在する場合のみスレッドに通知する.
             if self._thread_message["fields"]:
                 thread_ts = main_massage["ts"] if main_massage else None
                 # スレッドにスタックトレースを送信
@@ -136,14 +188,28 @@ class NotifySlackManager:
 
 
     # 通知の実行メソッド
-    def notify_slack_app_err_msg(self, container_name, channel_id, json_data, notification_settings):
+    def notify_slack_app_err_msg(self, container_name: str, channel_id: str, json_data: dict[str, Any], notification_settings: list[dict[str, Any]]):
+        """アプリケーションエラーメッセージをSlackに通知する.
+
+        Args:
+            container_name: 通知に表示するコンテナ名
+            channel_id: 送信先のSlackチャンネルID
+            json_data: 通知するログデータ
+            notification_settings: 通知設定情報
+        """
         # Slack通知用のアタッチメントを構築
         self._build_notification_attachment(container_name, json_data, notification_settings)
 
         # Slack API を使用して送信
         self._send_slack_message(channel_id)
 
-    def notify_slack_infra_mistakes(self, channel_id, attachment_body):
+    def notify_slack_infra_mistakes(self, channel_id: str, attachment_body: str) -> None:
+        """インフラストラクチャの設定不備がある場合にSlack通知を行う.
+
+        Args:
+            channel_id: 送信先のSlackチャンネルID
+            attachment_body: 通知するメッセージ本文
+        """
         client = WebClient(token=self._token)
         try:
             client.chat_postMessage(channel=channel_id, text=attachment_body)
