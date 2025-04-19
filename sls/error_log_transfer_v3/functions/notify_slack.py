@@ -83,14 +83,18 @@ class NotifySlackManager:
 
         message_field = json_data.get("message", None)
         if message_field:
-            timestamp = json_data.get("timestamp", json_data.get("@timestamp", "Unknown Timestamp"))
+            timestamp: str = json_data.get("timestamp", json_data.get("@timestamp", "Unknown Timestamp"))
+            print(f"timestamp(type):{type(timestamp)}")
+            split_timestamp = timestamp.split(".")[0]
+            print(split_timestamp)
+
             stack_trace = json_data.get("stack_trace", json_data.get("stacktrace", json_data.get("stack", "")))
             logger = json_data.get("logger_name", json_data.get("loggername", json_data.get("logger", "")))
 
             # TimeStampqを追加
             self._attachment_detail["fields"].append({
                 "title": "Timestamp",
-                "value": timestamp,
+                "value": split_timestamp,
                 "short": True
             })
 
