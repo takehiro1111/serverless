@@ -1,7 +1,8 @@
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import boto3
+from setting import is_holiday
 from slack_notify import send_slack_notification
 
 
@@ -13,30 +14,34 @@ def get_costs() -> float:
 
     # 月初の日付を取得（例: 2024-08-01）
     start_date = now.replace(day=1).strftime("%Y-%m-%d")
+    print(start_date)
 
     # 現在の日付と時刻を取得（例: 2024-08-24）
-    end_date = now.date().strftime("%Y-%m-%d")
+    tomorrow = (now + timedelta(days=1)).strftime("%Y-%m-%d")
+    print(tomorrow)
 
     # Cost Explorer APIの呼び出し
     response = client.get_cost_and_usage(
-        TimePeriod={"Start": start_date, "End": end_date},
+        TimePeriod={"Start": start_date, "End": tomorrow},
         Granularity="MONTHLY",
         Metrics=["UnblendedCost"],
+        Filter={
+            "Not": {
+                "Dimensions": {"Key": "RECORD_TYPE", "Values": ["Refund", "Credit"]}
+            }
+        },
     )
 
-    monthly_cost = abs(
-        float(response["ResultsByTime"][0]["Total"]["UnblendedCost"]["Amount"])
-    )
-    # 科学表記法の文字列に変換して解析(eをsplitで区切りたいため。)
-    monthly_cost_e = f"{monthly_cost:e}"
-    num, char = monthly_cost_e.split("e")
-    # print(f"{float(num):.2f}")
-
-    return float(num)
+    monthly_cost = response["ResultsByTime"][0]["Total"]["UnblendedCost"]["Amount"]
+    return float(monthly_cost)
 
 
 def lambda_handler(event, context):
-    # コストを取得してSlackに通知
+    print("is_holiday", is_holiday)
+    # 祝日なら早期リターンで処理しない。
+    if is_holiday:
+        return
+
     cost = get_costs()
     send_slack_notification(cost)
 
