@@ -21,7 +21,9 @@ Resources:
       FunctionName: daily-cost-notify
       Handler: notify_cost.lambda_handler
       Role: !GetAtt LambdaExecutionRole.Arn
-
+      Environment:
+        Variables:
+          SSM_PARAMETER_NAME: !GetAtt SlackWebhookParameter.Name
   CostNotifyLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:

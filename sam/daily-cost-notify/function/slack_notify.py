@@ -2,24 +2,27 @@ import json
 
 import boto3
 import requests
+from logger import logger
+from setting import SLACK_WEBHOOK_URL
 
 
 def get_ssm_parameter() -> str:
     ssm = boto3.client("ssm", "ap-northeast-1")
     try:
-        response = ssm.get_parameter(
-            Name="/development/daily-cost-notify/SLACK_WEBHOOK_URL", WithDecryption=True
-        )
+        response = ssm.get_parameter(Name=SLACK_WEBHOOK_URL, WithDecryption=True)
         return response["Parameter"]["Value"]
 
     except ssm.exceptions.ParameterNotFound:
-        raise ValueError("SSM parameter not found.")
+        logger.error("SSM parameter not found.")
+        raise
 
     except ssm.exceptions.ParameterVersionNotFound:
-        raise ValueError("SSM parameter version not found.")
+        logger.error("SSM parameter version not found.")
+        raise
 
     except Exception as e:
-        raise ValueError(f"Failed to get SSM parameter: {e}")
+        logger.error(f"Failed to get SSM parameter: {e}")
+        raise
 
 
 def send_slack_notification(cost):
@@ -36,6 +39,7 @@ def send_slack_notification(cost):
     )
 
     if response.status_code != 200:
-        raise ValueError(
+        logger.error(
             f"Request to Slack returned an error {response.status_code}, the response is:\n{response.text}"
         )
+        raise

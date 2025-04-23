@@ -1,28 +1,15 @@
 import json
-from datetime import datetime, timedelta, timezone
 
 import boto3
-from setting import is_holiday
+from setting import is_holiday, start_date, tomorrow
 from slack_notify import send_slack_notification
 
 
-def get_costs() -> float:
+def get_costs(start_date, end_date) -> float:
     client = boto3.client("ce", region_name="us-east-1")
 
-    # 現在の日時（UTC）
-    now = datetime.now(timezone.utc)
-
-    # 月初の日付を取得（例: 2024-08-01）
-    start_date = now.replace(day=1).strftime("%Y-%m-%d")
-    print(start_date)
-
-    # 現在の日付と時刻を取得（例: 2024-08-24）
-    tomorrow = (now + timedelta(days=1)).strftime("%Y-%m-%d")
-    print(tomorrow)
-
-    # Cost Explorer APIの呼び出し
     response = client.get_cost_and_usage(
-        TimePeriod={"Start": start_date, "End": tomorrow},
+        TimePeriod={"Start": start_date, "End": end_date},
         Granularity="MONTHLY",
         Metrics=["UnblendedCost"],
         Filter={
@@ -42,10 +29,10 @@ def lambda_handler(event, context):
     if is_holiday:
         return
 
-    cost = get_costs()
-    send_slack_notification(cost)
+    months_total_cost = get_costs(start_date, tomorrow)
+    send_slack_notification(months_total_cost)
 
     return {
         "statusCode": 200,
-        "body": json.dumps(f"Success Notify Cost Status: {cost}"),
+        "body": json.dumps(f"Success Notify Cost Status: ${months_total_cost}"),
     }
