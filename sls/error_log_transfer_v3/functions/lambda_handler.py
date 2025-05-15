@@ -6,15 +6,16 @@ S3バケットからログファイルを読み込み、条件に基づいて処
 
 import gzip
 import io
+from typing import Any
 
 import boto3
 
 from .notify_slack import NotifySlackManager
 from .parse_log import LogParser
-from .setting import ERRORS
+from .setting import IGNORE_DIRS
 
 
-def get_s3_data(bucket: str, key: str) -> list[str]:
+def get_s3_data(bucket: str, key: str) -> Any:
     """S3バケットからデータを取得して行単位のリストとして返す.
 
     Args:
@@ -48,35 +49,32 @@ def lambda_handler(event, context) -> None:
         event: S3トリガーイベント情報
         context: Lambda実行コンテキスト
     """
-    for data in event["Records"]:
-        s3_info = data["s3"]
-        bucket = s3_info["bucket"]["name"]
-        key = s3_info["object"]["key"]
-        print("key:", key)
+    if "detail" in event:
+        bucket = event["detail"]["bucket"]["name"]
+        key = event["detail"]["object"]["key"]
 
         # Firehoseから転送される際のアプリケーションごとのprefix
         src = key.split("/")[0]
-        print("src:", src)
+
         # アプリケーションに関係ないデータを除外するために変数化.
         directory = key.split("/")[1]
-        print("directory:", directory)
 
-        if directory in ERRORS:
-            continue
+        if directory in IGNORE_DIRS:
+            return
         # HBのようなイベントログは通知する必要がなく処理したくないため.
         elif "event-log" in src:
-            break
-        else:
-            body = get_s3_data(bucket, key)
+            return
 
-            # SLack通知のクラスのインスタンス化
-            notify_slack_manager = NotifySlackManager()
+        body = get_s3_data(bucket, key)
 
-            # ログの解析用メソッドを定義しているクラスをインスタンス化
-            log_parser = LogParser(notify_slack_manager)
+        # SLack通知のクラスのインスタンス化
+        notify_slack_manager = NotifySlackManager()
 
-            # S3オブジェクトと一致するDynamoDBのデータを取得
-            log_parser.get_dynamodb_item(src)
+        # ログの解析用メソッドを定義しているクラスをインスタンス化
+        log_parser = LogParser(notify_slack_manager)
 
-            # アプリケーションログとDynamoDBの情報を付け合わせして処理.
-            log_parser.parse_application_log(src, body)
+        # S3オブジェクトと一致するDynamoDBのデータを取得
+        log_parser.get_dynamodb_item(src)
+
+        # アプリケーションログとDynamoDBの情報を付け合わせして処理.
+        log_parser.parse_application_log(src, body)

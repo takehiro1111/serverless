@@ -5,7 +5,7 @@
 
 import json
 import re
-from typing import Any, Optional
+from typing import Any
 
 import boto3
 
@@ -56,13 +56,12 @@ class LogParser:
 
         if "Item" in response:
             self.item = response["Item"]
-            print("item:", self.item)
             return self.item
         else:
             logger.info(
                 "srcにマッチするデータが存在しません.DynamoDBを確認してください."
             )
-            if self.empty_item_flag == False:
+            if self.empty_item_flag is False:
                 dynamodb_empty_msg = notification_setting_empty_msg(src)
                 self.notify_slack_manager.notify_slack_infra_mistakes(
                     SLACK_CHANNEL_ID_SRE_LAMBDA, dynamodb_empty_msg
@@ -71,7 +70,6 @@ class LogParser:
                 self.empty_item_flag = True
             return None
 
-    # DynamoDBの`notification_setting`のkey情報を取得
     def _get_notification_setting_key(
         self, notification_settings: str | None | list[dict[str, str]]
     ) -> str | None:
@@ -115,10 +113,8 @@ class LogParser:
                 # S3から取得するログデータをJSON形式に変換
                 # 例外処理を追加して、JSON形式でない場合はスキップ
                 json_data = json.loads(line)
-                print("json_data:", json_data)
                 container_name = json_data.get("container_name", "")
                 self._conteinr_name = container_name
-                print("container_name:", container_name)
 
                 message = json_data.get("message", "")
                 timestamp = json_data.get("timestamp", json_data.get("@timestamp", ""))
@@ -131,7 +127,7 @@ class LogParser:
                 self.processed_messages.add(message_key)
 
             except json.JSONDecodeError:
-                continue  # JSON形式でない場合は次の行へ
+                continue
 
             # ログのバリデーション処理
             validator = LogValidation(
@@ -145,7 +141,7 @@ class LogParser:
                 container_name, self.diff_key_flag, src, self.notification_setting_key
             )
 
-            # DynamoDBが空の場合の通知は1回のみにしたいためのフラグ処理.
+            # ログレベルのキーの値が合わない場合の通知は一度のみにしたいためのフラグ処理.
             if result_flag is not None:
                 self.diff_key_flag = True
 
@@ -213,7 +209,9 @@ class BaseValidation:
             for ignore_keyword in self.blacklist_regexp:
                 # S3オブジェクトに入るログのJsonデータの中にblacklistとして指定した文字列が含まれるか確認.
                 if re.compile(ignore_keyword).search(str(self.json_data)):
-                    print("以下文字列がblacklistにHIT（通知しない）: " + ignore_keyword)
+                    logger.warning(
+                        "以下文字列がblacklistにHIT（通知しない）: " + ignore_keyword
+                    )
                     return True
         return False
 
@@ -259,8 +257,6 @@ class LogValidation(BaseValidation):
             処理結果フラグ.True: 通知実行、None: 通知なし
         """
         check_notification_setting = self.check_notification_settings()
-        print(f"※※チャンネルIDが見つからないと警告される件:{self.channel_id}")
-        print(f"diff_key_flagの中身:{diff_key_flag}")
 
         if check_notification_setting and self.json_data.get("message"):
             if not self.check_blacklisted():
@@ -274,10 +270,10 @@ class LogValidation(BaseValidation):
                 else:
                     logger.info("SlackチャンネルIDが見つかりません.(True)")
         elif check_notification_setting is False and self.json_data.get("message"):
-            if self.channel_id and diff_key_flag is False:
+            if diff_key_flag is False:
                 dynamo_key_diff_msg = notification_setting_diff_msg(src, dynamodb_key)
                 self.notify_slack_manager.notify_slack_infra_mistakes(
-                    self.channel_id, dynamo_key_diff_msg
+                    SLACK_CHANNEL_ID_SRE_LAMBDA, dynamo_key_diff_msg
                 )
                 # ループの影響で通知が重複しないようにする.
                 return True

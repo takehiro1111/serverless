@@ -3,6 +3,8 @@
 エラーログ転送処理に関する各種設定値と通知メッセージテンプレートを提供する.
 """
 
+import os
+
 
 def notification_setting_diff_msg(src: str, dynamodb_key: str) -> str:
     """DynamoDBのキーとアプリケーションログのキーが不一致の場合の通知メッセージ.
@@ -33,3 +35,4 @@ def notification_setting_empty_msg(src: str) -> str:
 ERRORS: list[str] = ["errors", "error", "manifests"]
 SLACK_CHANNEL_ID_SRE_LAMBDA = "C07EFGAE81J"
 TITLE_COLOR_CODE = "FFC859"
+ENV = os.getenv("stage")
