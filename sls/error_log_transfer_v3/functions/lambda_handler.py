@@ -4,6 +4,8 @@ S3バケットからログファイルを読み込み、条件に基づいて処
 必要に応じてSlack通知を行う.
 """
 
+import gzip
+import io
 from typing import Any
 
 import boto3
@@ -25,7 +27,17 @@ def get_s3_data(bucket: str, key: str) -> Any:
     """
     s3 = boto3.client("s3")
     response = s3.get_object(Bucket=bucket, Key=key)
-    return response["Body"].read().decode("utf-8", "ignore").splitlines()
+    content = response["Body"].read()
+
+    # ファイル名またはContent-Encodingからgzip圧縮を検出
+    is_gzipped = key.endswith(".gz") or response.get("ContentEncoding") == "gzip"
+
+    if is_gzipped:
+        # gzipファイルを解凍
+        with gzip.GzipFile(fileobj=io.BytesIO(content), mode="rb") as f:
+            content = f.read()
+
+    return content.decode("utf-8", "ignore").splitlines()
 
 
 def lambda_handler(event, context) -> None:

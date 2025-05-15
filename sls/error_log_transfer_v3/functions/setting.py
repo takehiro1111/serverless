@@ -31,8 +31,8 @@ def notification_setting_empty_msg(src: str) -> str:
     return f"`{src}`: インフラの設定漏れです.DynamoDBにItemを設定してください."
 
 
-# config
-IGNORE_DIRS: list[str] = ["errors", "error", "manifests"]
-SLACK_CHANNEL_ID_SRE_LAMBDA = ""  # 要設定
+# Config
+ERRORS: list[str] = ["errors", "error", "manifests"]
+SLACK_CHANNEL_ID_SRE_LAMBDA = "C07EFGAE81J"
 TITLE_COLOR_CODE = "FFC859"
 ENV = os.getenv("stage")
