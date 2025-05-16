@@ -28,15 +28,23 @@ def get_s3_data(bucket: str, key: str) -> list[str]:
     s3 = boto3.client("s3")
     response = s3.get_object(Bucket=bucket, Key=key)
     content = response["Body"].read()
-    logger.info(f"content: {content}")
+    print(f"content: {content}")
+    print("response", response)
 
     # ファイル名またはContent-Encodingからgzip圧縮を検出
-    is_gzipped = key.endswith(".gz") or response.get("ContentEncoding") == "gzip"
+    content_type_from_headers = (
+        response.get("ResponseMetadata", {}).get("HTTPHeaders", {}).get("content-type")
+    )
+    is_gzipped = (
+        key.endswith(".gz") or content_type_from_headers == "application/x-gzip"
+    )
 
     if is_gzipped:
         # gzipファイルを解凍
         with gzip.GzipFile(fileobj=io.BytesIO(content), mode="rb") as f:
             content = f.read()
+
+    print("デコード後", content.decode("utf-8", "ignore").splitlines())
 
     return content.decode("utf-8", "ignore").splitlines()
 
