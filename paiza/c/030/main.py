@@ -28,13 +28,13 @@ h, w = map(int, input().split())
 
 
 for _ in range(h):
-  array =  map(int, input().split())
-  
-  output_line_elements = []
-  for i in array:
-    if i >= 128:
-      output_line_elements.append("1")
-    elif i <= 127:
-      output_line_elements.append("0")
-  
-  print(" ".join(output_line_elements))
+    array = map(int, input().split())
+
+    output_line_elements = []
+    for i in array:
+        if i >= 128:
+            output_line_elements.append("1")
+        elif i <= 127:
+            output_line_elements.append("0")
+
+    print(" ".join(output_line_elements))
