@@ -8,12 +8,7 @@ from typing import List
 import boto3
 import botocore.auth as auth
 from botocore.awsrequest import AWSRequest
-
-# 定数
-S3_BUCKET = os.getenv("S3_BUCKET")
-PRODUCT = os.getenv("PRODUCT")
-CLUSTERS = os.getenv("CLUSTERS").split(",")
-LOG_TYPES = os.getenv("LOG_TYPES").split(",")
+from setting import CLUSTERS, LOG_TYPES, PRODUCT, S3_BUCKET
 
 # クライアント
 rds_client = boto3.client("rds")
