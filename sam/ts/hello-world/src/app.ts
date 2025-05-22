@@ -11,20 +11,24 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
  */
 
 export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-    try {
-        return {
-            statusCode: 200,
-            body: JSON.stringify({
-                message: 'hello world',
-            }),
-        };
-    } catch (err) {
-        console.log(err);
-        return {
-            statusCode: 500,
-            body: JSON.stringify({
-                message: 'some error happened',
-            }),
-        };
+    // if (!event.body) {
+    //     return {
+    //         statusCode: 400,
+    //         body: JSON.stringify({
+    //             message: "Body is required"
+    //         })
+    //     }
+    // }
+
+    // const uppercaseBody = event.body.toUpperCase();
+    const message = "hello ts world!".toUpperCase();
+
+    return {
+        statusCode: 200,
+        body: JSON.stringify({
+            // uppercase: uppercaseBody,
+            message: message
+        })
     }
 };
+
