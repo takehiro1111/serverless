@@ -1,0 +1,135 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "The AWS CloudFormation template for this Serverless application",
+  "Resources": {
+    "ServerlessDeploymentBucket": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "ServerlessDeploymentBucketPolicy": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Properties": {
+        "Bucket": {
+          "Ref": "ServerlessDeploymentBucket"
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:*",
+              "Effect": "Deny",
+              "Principal": "*",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":s3:::",
+                      {
+                        "Ref": "ServerlessDeploymentBucket"
+                      },
+                      "/*"
+                    ]
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":s3:::",
+                      {
+                        "Ref": "ServerlessDeploymentBucket"
+                      }
+                    ]
+                  ]
+                }
+              ],
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": false
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "NotifyLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/stg_errorLogtransfer_v3"
+      }
+    },
+    "NotifyLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "ServerlessDeploymentBucket"
+          },
+          "S3Key": "serverless/errorLogtransfer-v3/stg/1744357183895-2025-04-11T07:39:43.895Z/errorLogtransfer-v3.zip"
+        },
+        "Handler": "functions/lambda_handler.lambda_handler",
+        "Runtime": "python3.12",
+        "FunctionName": "stg_errorLogtransfer_v3",
+        "MemorySize": 1024,
+        "Timeout": 6,
+        "Environment": {
+          "Variables": {
+            "stage": "stg"
+          }
+        },
+        "Role": "arn:aws:iam::650251692423:role/lambda-transfer-error-log"
+      },
+      "DependsOn": [
+        "NotifyLogGroup"
+      ]
+    },
+    "NotifyLambdaVersionvcx9j9GwD9ZvydmfFVTNl77qwzrKiRVlqob4d107ro": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "NotifyLambdaFunction"
+        },
+        "CodeSha256": "3WocfzcrcLy4kK8vP4AHkq5wVO7BXaWh5thvQaA2ywE="
+      }
+    }
+  },
+  "Outputs": {
+    "ServerlessDeploymentBucketName": {
+      "Value": {
+        "Ref": "ServerlessDeploymentBucket"
+      },
+      "Export": {
+        "Name": "sls-errorLogtransfer-v3-stg-ServerlessDeploymentBucketName"
+      }
+    },
+    "NotifyLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "NotifyLambdaVersionvcx9j9GwD9ZvydmfFVTNl77qwzrKiRVlqob4d107ro"
+      },
+      "Export": {
+        "Name": "sls-errorLogtransfer-v3-stg-NotifyLambdaFunctionQualifiedArn"
+      }
+    }
+  }
+}

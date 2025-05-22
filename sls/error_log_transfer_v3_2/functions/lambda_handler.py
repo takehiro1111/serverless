@@ -31,7 +31,12 @@ def get_s3_data(bucket: str, key: str) -> list[str]:
     logger.info(f"content: {content}")
 
     # ファイル名またはContent-Encodingからgzip圧縮を検出
-    is_gzipped = key.endswith(".gz") or response.get("ContentEncoding") == "gzip"
+    content_type_from_headers = (
+        response.get("ResponseMetadata", {}).get("HTTPHeaders", {}).get("content-type")
+    )
+    is_gzipped = (
+        key.endswith(".gz") or content_type_from_headers == "application/x-gzip"
+    )
 
     if is_gzipped:
         # gzipファイルを解凍
