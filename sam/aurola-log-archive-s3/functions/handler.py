@@ -1,18 +1,26 @@
 import gzip
-import os
+import time
 import urllib.request
 from datetime import datetime, timedelta
 from io import BytesIO
-from typing import List
+from urllib.error import ConnectionError, URLError
 
 import boto3
 import botocore.auth as auth
 from botocore.awsrequest import AWSRequest
+from botocore.config import Config
 from setting import CLUSTERS, LOG_TYPES, PRODUCT, S3_BUCKET
 
+# SDKでAPIコールする際のリトライ設定
+retry_config = Config(
+    retries={"max_attempts": 5, "mode": "standard", "retry_backoff_factor": 2},
+    connect_timeout=5,
+    read_timeout=60,
+)
+
 # クライアント
-rds_client = boto3.client("rds")
-s3_client = boto3.client("s3")
+rds_client = boto3.client("rds", config=retry_config)
+s3_client = boto3.client("s3", config=retry_config)
 
 # セッション情報
 session = boto3.session.Session()
@@ -61,27 +69,46 @@ def download_and_compress_log(instance_name: str, log_file_name: str) -> BytesIO
     # 署名付きURLを生成
     host = f"rds.{region}.amazonaws.com"
     url = f"https://{host}/v13/downloadCompleteLogFile/{instance_name}/{log_file_name}"
-    awsreq = AWSRequest(method="GET", url=url)
-    sigv4auth.add_auth(awsreq)
 
-    req = urllib.request.Request(
-        url,
-        headers={
-            "Authorization": awsreq.headers["Authorization"],
-            "Host": host,
-            "X-Amz-Date": awsreq.context["timestamp"],
-            "X-Amz-Security-Token": credentials.token,
-        },
-    )
+    max_retries = 5
+    retry_delay = 1
 
-    # ログファイルをダウンロード
-    with urllib.request.urlopen(req) as response:
-        log_data = response.read()
+    log_data = None
+    for attempt in range(1, max_retries + 1):
+        try:
+            awsreq = AWSRequest(method="GET", url=url)
+            sigv4auth.add_auth(awsreq)
 
-    # ファイルが空の場合は除外
-    if len(log_data) == 0:
+            req = urllib.request.Request(
+                url,
+                headers={
+                    "Authorization": awsreq.headers["Authorization"],
+                    "Host": host,
+                    "X-Amz-Date": awsreq.context["timestamp"],
+                    "X-Amz-Security-Token": credentials.token,
+                },
+            )
+
+            # ログファイルをダウンロード
+            with urllib.request.urlopen(req) as response:
+                log_data = response.read()
+                break
+
+        except (URLError, ConnectionError) as e:
+            if attempt == max_retries:
+                print(f"Failed to download log file after {max_retries} attempts: {e}")
+                raise
+
+            # エクスポネンシャルバックオフによるリトライ
+            wait_time = retry_delay * (2**attempt)
+            print(
+                f"Download attempt {attempt} failed: {e}. Retrying in {wait_time} seconds..."
+            )
+            time.sleep(wait_time)
+
+    if log_data is None or len(log_data) == 0:
         print(f"Log file {log_file_name} is empty. Skipping.")
-        return None
+        return
 
     # ログファイルを圧縮
     compressed_data = BytesIO()
@@ -127,16 +154,22 @@ def main(event, context):
                 print(f"Processing log file: {log_file_name}")
 
                 # S3オブジェクトキーを生成
-                if log_type == "audit":
-                    timestamp = datetime.strptime(
-                        log_file_name.split(".")[3], "%Y-%m-%d-%H-%M"
+                try:
+                    if log_type == "audit":
+                        timestamp = datetime.strptime(
+                            log_file_name.split(".")[3], "%Y-%m-%d-%H-%M"
+                        )
+                        object_key = f"{PRODUCT}/{cluster_name}/{log_type}/{timestamp.year}/{timestamp.month:02}/{timestamp.day:02}/{timestamp.hour:02}/{instance_name}/{log_file_name.split('/')[-1]}.gz"
+                    elif log_type in ["error", "slowquery"]:
+                        timestamp = datetime.strptime(
+                            log_file_name.split(".")[2], "%Y-%m-%d"
+                        )
+                        object_key = f"{PRODUCT}/{cluster_name}/{log_type}/{timestamp.year}/{timestamp.month:02}/{timestamp.day:02}/{log_file_name.split('.')[3]}/{instance_name}/{log_file_name.split('/')[-1]}.gz"
+                except (IndexError, ValueError) as e:
+                    print(
+                        f"Error parsing log file name {log_file_name}: {e}. Skipping."
                     )
-                    object_key = f"{PRODUCT}/{cluster_name}/{log_type}/{timestamp.year}/{timestamp.month:02}/{timestamp.day:02}/{timestamp.hour:02}/{instance_name}/{log_file_name.split('/')[-1]}.gz"
-                elif log_type in ["error", "slowquery"]:
-                    timestamp = datetime.strptime(
-                        log_file_name.split(".")[2], "%Y-%m-%d"
-                    )
-                    object_key = f"{PRODUCT}/{cluster_name}/{log_type}/{timestamp.year}/{timestamp.month:02}/{timestamp.day:02}/{log_file_name.split('.')[3]}/{instance_name}/{log_file_name.split('/')[-1]}.gz"
+                    continue
 
                 # S3で同一のファイル名が存在するか確認
                 try:
