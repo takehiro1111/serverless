@@ -3,7 +3,7 @@ import time
 import urllib.request
 from datetime import datetime, timedelta
 from io import BytesIO
-from urllib.error import ConnectionError, URLError
+from urllib.error import URLError
 
 import boto3
 import botocore.auth as auth
@@ -13,7 +13,7 @@ from setting import CLUSTERS, LOG_TYPES, PRODUCT, S3_BUCKET
 
 # SDKでAPIコールする際のリトライ設定
 retry_config = Config(
-    retries={"max_attempts": 5, "mode": "standard", "retry_backoff_factor": 2},
+    retries={"max_attempts": 5, "mode": "standard"},
     connect_timeout=5,
     read_timeout=60,
 )
@@ -65,13 +65,12 @@ def get_target_log_file_names(
 
 
 # ログファイルをダウンロードし、圧縮する
-def download_and_compress_log(instance_name: str, log_file_name: str) -> BytesIO:
+def download_and_compress_log(
+    instance_name: str, log_file_name: str, max_retries=5, retry_delay=1
+) -> BytesIO:
     # 署名付きURLを生成
     host = f"rds.{region}.amazonaws.com"
     url = f"https://{host}/v13/downloadCompleteLogFile/{instance_name}/{log_file_name}"
-
-    max_retries = 5
-    retry_delay = 1
 
     log_data = None
     for attempt in range(1, max_retries + 1):
@@ -94,7 +93,7 @@ def download_and_compress_log(instance_name: str, log_file_name: str) -> BytesIO
                 log_data = response.read()
                 break
 
-        except (URLError, ConnectionError) as e:
+        except URLError as e:
             if attempt == max_retries:
                 print(f"Failed to download log file after {max_retries} attempts: {e}")
                 raise
