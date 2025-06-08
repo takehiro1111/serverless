@@ -9,7 +9,7 @@ def linear_search(numbers: list[int], data: int) -> IndexNum:
     """
     for i in range(0, len(numbers)):
         if numbers[i] == data:
-            return f"linear_search/ インデックス{IndexNum(i) }にありました。"
+            return f"linear_search/ インデックス{IndexNum(i)}にありました。"
 
     return -1
 
