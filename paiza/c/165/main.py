@@ -30,7 +30,7 @@ made_pairs = []
 
 # 生産された順番に処理する
 for i in range(N):
-    item_index = i + 1
+    item_number = i + 1
 
     # カレーの処理
     if order[i] == "C":
@@ -38,20 +38,20 @@ for i in range(N):
         if rice_stock:
             # pop(0)でリストの先頭(一番古い)要素を取得
             rice_index = rice_stock.pop(0)
-            made_pairs.append((item_index, rice_index))
+            made_pairs.append((item_number, rice_index))
         # 在庫がなければ、カレーを在庫に追加
         else:
-            curry_stock.append(item_index)
+            curry_stock.append(item_number)
 
     # ライスの処理
     elif order[i] == "R":
         # カレーの在庫があれば、一番古いものとペアにする
         if curry_stock:
             curry_index = curry_stock.pop(0)
-            made_pairs.append((curry_index, item_index))
+            made_pairs.append((curry_index, item_number))
         # 在庫がなければ、ライスを在庫に追加
         else:
-            rice_stock.append(item_index)
+            rice_stock.append(item_number)
 
 # ----- 結果の出力 -----
 
