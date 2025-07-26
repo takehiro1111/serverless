@@ -61,7 +61,7 @@ jobs:
 
       - if: always()
         name: Slack Notification
-        uses: rtCamp/action-slack-notify@v2.3.2
+        uses: rtCamp/action-slack-notify@e31e87e03dd19038e411e38ae27cbad084a90661 # v2.3.3
         env:
           SLACK_CHANNEL: ${{ env.SLACK_CHANNEL_NAME }}
           SLACK_COLOR: ${{ job.status }}
