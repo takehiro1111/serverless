@@ -1,1 +1,1 @@
-types-requests==2.32.0.20241016
+types-requests==2.32.4.20250611
