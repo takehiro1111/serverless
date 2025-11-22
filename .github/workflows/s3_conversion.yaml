@@ -28,7 +28,7 @@ jobs:
         working-directory: sam/s3-conversion
     timeout-minutes: 60
     steps: # ref:https://docs.aws.amazon.com/ja_jp/serverless-application-model/latest/developerguide/deploying-using-github.html
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
 
       - uses: actions/setup-python@v5
 
