@@ -77,17 +77,6 @@ Resources:
                   - ce:GetSavingsPlansUtilization
                   - ce:GetTags
                 Resource: '*'
-
-        # - PolicyName: sts_policy
-        #   PolicyDocument:
-        #     Version: '2012-10-17'
-        #     Statement:
-        #       - Effect: Allow
-        #         Action:
-        #           - sts:*
-        #         Resource:
-        #           - arn:aws:iam::685339645368:role/monitor-waf-rule
-
   SchedulerExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -113,7 +102,7 @@ Resources:
     Properties:
       Name: cost-notify
       Description: Cron to monitor Lambda every hour
-      ScheduleExpression: cron(07 22 ? * MON-SUN *)
+      ScheduleExpression: cron(00 09 ? * MON-SUN *)
       ScheduleExpressionTimezone: Asia/Tokyo
       State: ENABLED
       FlexibleTimeWindow:

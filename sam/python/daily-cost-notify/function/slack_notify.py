@@ -29,7 +29,7 @@ def send_slack_notification(cost):
     webhook_url = get_ssm_parameter()
 
     # Slackに送信するメッセージ
-    message = {"text": f"月初から本日までのAWS使用料は ${cost:.2f} です。"}
+    message = {"text": f"月初から本日までのAWS使用料は `${cost:.2f}` です。"}
 
     # Slack WebhookにPOSTリクエストを送信
     response = requests.post(
