@@ -1,4 +1,4 @@
-FROM public.ecr.aws/lambda/nodejs:20
+FROM public.ecr.aws/lambda/nodejs:20@sha256:71ba604ae68587787fe45566e6b4e739de7bde66ba7b43eb09102781c0b71b1d
 
 COPY app.mjs package*.json ./
 
