@@ -32,13 +32,13 @@ jobs:
 
       - uses: actions/setup-python@v5
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
 
       # SAMビルドのキャッシュ
-      - uses: actions/cache@v4
+      - uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5
         with:
           path: .aws-sam/build
           key: ${{ runner.os }}-sam-build-${{ hashFiles('**/*.py') }}
