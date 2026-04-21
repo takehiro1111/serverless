@@ -45,7 +45,7 @@ jobs:
 
       - uses: aws-actions/setup-sam@v2
 
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6
         with:
           aws-region: ${{env.AWS_REGION}}
           role-to-assume: ${{ env.IAM_ROLE_ARN }}
