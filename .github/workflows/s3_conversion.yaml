@@ -43,7 +43,7 @@ jobs:
           path: .aws-sam/build
           key: ${{ runner.os }}-sam-build-${{ hashFiles('**/*.py') }}
 
-      - uses: aws-actions/setup-sam@v2
+      - uses: aws-actions/setup-sam@89ddb14d60e682855e3fea4be85b3c56485de310 # v3
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
