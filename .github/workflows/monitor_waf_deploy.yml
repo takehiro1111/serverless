@@ -29,7 +29,7 @@ jobs:
     steps: # ref:https://docs.aws.amazon.com/ja_jp/serverless-application-model/latest/developerguide/deploying-using-github.html
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-      - uses: aws-actions/setup-sam@v2
+      - uses: aws-actions/setup-sam@89ddb14d60e682855e3fea4be85b3c56485de310 # v3
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{env.AWS_REGION}}
@@ -42,7 +42,7 @@ jobs:
         name: sam update
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-      - uses: aws-actions/setup-sam@v2
+      - uses: aws-actions/setup-sam@89ddb14d60e682855e3fea4be85b3c56485de310 # v3
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{env.AWS_REGION}}
