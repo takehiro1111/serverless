@@ -1,7 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:base",
+    "config:recommended",
     "config:best-practices",
     ":label(renovate)",
     ":timezone(Asia/Tokyo)",
@@ -39,21 +39,21 @@
       "groupName": "python dependencies"
     },
     {
-      "matchPackagePatterns": [
-        "^pytest"
-      ],
-      "groupName": "pytest packages"
+      "groupName": "pytest packages",
+      "matchPackageNames": [
+        "/^pytest/"
+      ]
     }
   ],
   "pip_requirements": {
-    "fileMatch": [
-      "^requirements.*\\.txt$",
-      "^requirements/.*\\.txt$"
+    "managerFilePatterns": [
+      "/^requirements.*\\.txt$/",
+      "/^requirements/.*\\.txt$/"
     ]
   },
   "poetry": {
-    "fileMatch": [
-      "^pyproject\\.toml$"
+    "managerFilePatterns": [
+      "/^pyproject\\.toml$/"
     ]
   },
   "schedule": [
