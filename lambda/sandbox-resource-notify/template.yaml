@@ -1,0 +1,121 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Weekly Slack notification of resources remaining in the sandbox account
+
+Resources:
+  SandboxResourceNotifyFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x
+    Properties:
+      FunctionName: sandbox-resource-notify
+      CodeUri: .
+      Handler: bootstrap
+      Runtime: provided.al2023
+      Architectures:
+        - arm64
+      Timeout: 120
+      MemorySize: 128
+      Role: !GetAtt LambdaExecutionRole.Arn
+      LoggingConfig:
+        LogFormat: JSON
+      Environment:
+        Variables:
+          STACK_NAME: !Ref AWS::StackName
+          TARGET_REGIONS: ap-northeast-1
+
+  SandboxResourceNotifyLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${SandboxResourceNotifyFunction}
+      RetentionInDays: 7
+
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: sandbox-resource-notify-lambda-execution-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: logs_policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/sandbox-resource-notify:*'
+        - PolicyName: describe_resources_policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:DescribeInstances
+                  - ec2:DescribeVolumes
+                  - ec2:DescribeAddresses
+                  - ec2:DescribeNatGateways
+                  - rds:DescribeDBInstances
+                  - rds:DescribeDBClusters
+                  - elasticloadbalancing:DescribeLoadBalancers
+                  - ecs:ListClusters
+                  - eks:ListClusters
+                  - lambda:ListFunctions
+                  - cloudformation:ListStacks
+                  - s3:ListAllMyBuckets
+                Resource: '*'
+
+  SchedulerExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: sandbox-resource-notify-event-schedule-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: scheduler.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: InvokeLambdaPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: lambda:InvokeFunction
+                Resource: !GetAtt SandboxResourceNotifyFunction.Arn
+
+  SandboxResourceNotifySchedule:
+    Type: AWS::Scheduler::Schedule
+    Properties:
+      Name: sandbox-resource-notify
+      Description: Weekly check for resources remaining in the sandbox account
+      ScheduleExpression: cron(0 9 ? * MON *)
+      ScheduleExpressionTimezone: Asia/Tokyo
+      State: ENABLED
+      FlexibleTimeWindow:
+        Mode: 'OFF'
+      Target:
+        Arn: !GetAtt SandboxResourceNotifyFunction.Arn
+        RoleArn: !GetAtt SchedulerExecutionRole.Arn
+
+  SandboxResourceNotifyLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref SandboxResourceNotifyFunction
+      Action: lambda:InvokeFunction
+      Principal: scheduler.amazonaws.com
+      SourceArn: !GetAtt SandboxResourceNotifySchedule.Arn
+
+Outputs:
+  SandboxResourceNotifyFunctionName:
+    Description: Name of the Lambda function
+    Value: !Ref SandboxResourceNotifyFunction
